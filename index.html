@@ -114,14 +114,11 @@
     border-radius:16px;padding:18px 14px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;
     box-shadow:0 0 0 3px rgba(242,183,5,.18)}
   .champ-crown{font-family:var(--font-pixel);font-size:9px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
-  .champ-name{font-size:20px;font-weight:800;margin:6px 0 12px}
-  .champ-hero{display:flex;flex-direction:column;align-items:center;gap:3px;margin-bottom:10px}
-  .champ-cup{font-size:42px;line-height:1;animation:cupLift 1.3s ease-in-out infinite}
-  .champ-cup-solo{font-size:64px;margin:10px 0}
+  .champ-name{font-size:20px;font-weight:800;margin:6px 0 10px}
+  .champ-cup{font-size:52px;line-height:1;margin:2px 0 10px;animation:cupLift 1.3s ease-in-out infinite}
+  .champ-cup-solo{font-size:52px;margin:2px 0 10px}
   @keyframes cupLift{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
-  .champ-hero-name{font-weight:800;font-size:16px}
-  .champ-hero-role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-  .champ-squad{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px}
+  .champ-squad{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:4px}
   .champ-player{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px}
   .champ-player span{font-size:11px;color:var(--muted);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -1416,42 +1413,20 @@ function simularCampeonato(){
   save(); render();
 }
 
-function champAwardStats(roster){
-  const stat = {};
-  roster.forEach(id=> stat[id] = { id, mvp:0, goals:0, assists:0 });
-  data.matches.filter(m=>isChampMatch(m)).forEach(m=>{
-    if(m.mvpId && stat[m.mvpId]) stat[m.mvpId].mvp++;
-    (m.events||[]).forEach(e=>{
-      if(e.scorerId && stat[e.scorerId]) stat[e.scorerId].goals++;
-      if(e.assistId && stat[e.assistId]) stat[e.assistId].assists++;
-    });
-  });
-  return roster.map(id=>stat[id]).sort((a,b)=> (b.mvp*3+b.goals) - (a.mvp*3+a.goals) || b.assists-a.assists);
-}
 function championCardHTML(){
   const final = koRoundMatches(2)[0];
   if(!final || !isPlayed(final)) return '';
   const name = koWinner(final).name;
   const roster = playersOfTeam(name);
-  const stats = champAwardStats(roster);
-  const bestId = stats.length ? stats[0].id : null;
-  const best = bestId ? getPlayer(bestId) : null;
-  const others = roster.filter(id=>id!==bestId);
-  const hero = best ? `<div class="champ-hero">
-      <div class="champ-cup">🏆</div>
-      ${playerAvatar(best, 76)}
-      <div class="champ-hero-name">${esc(pname(bestId))}</div>
-      <div class="champ-hero-role">Figura del campeón</div>
-    </div>` : `<div class="champ-cup champ-cup-solo">🏆</div>`;
-  const squad = others.length ? `<div class="champ-squad">${others.map(id=>{
+  const squad = roster.length ? `<div class="champ-squad">${roster.map(id=>{
     const p = getPlayer(id); if(!p) return '';
-    return `<div class="champ-player">${playerAvatarBust(p,32)}<span>${esc(pname(id))}</span></div>`;
+    return `<div class="champ-player">${playerAvatarBust(p,34)}<span>${esc(pname(id))}</span></div>`;
   }).join('')}</div>` : '';
   return `<div class="champ-card">
     <div class="champ-crown">Campeón del torneo</div>
     <div class="champ-name">${esc(name)}</div>
-    ${hero}
-    ${squad}
+    <div class="champ-cup champ-cup-solo">🏆</div>
+    ${squad || '<p class="muted">Sumá jugadores a este equipo para verlos festejar.</p>'}
   </div>`;
 }
 
@@ -2136,7 +2111,7 @@ function jugadoresHTML(){
       <details class="help"><summary>7. Escabio y comentarios</summary>
         <p class="muted">En <b>Partidos</b>, en la parte de abajo, elegí el partido en el selector para cargar el <b>Escabio</b> con − / + y dejar <b>comentarios</b> con tu nombre.</p></details>
       <details class="help"><summary>8. Campeonato</summary>
-        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con la <b>figura</b> y el plantel levantando la copa.</p></details>
+        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con <b>todo el equipo</b> levantando la copa.</p></details>
       <details class="help"><summary>9. Estadísticas y ranking</summary>
         <p class="muted">En <b>Estadísticas</b> tenés el podio y la tabla completa. Cambiá la categoría con las píldoras de arriba: goles, asistencias, figuras, partidos jugados, victorias y derrotas. Al final hay un gráfico de escabio por partido.</p></details>
       <details class="help"><summary>10. Ficha de cada jugador</summary>
