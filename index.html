@@ -505,7 +505,7 @@
       </svg>
       <div>
         <h1>Piel Morena FC</h1>
-        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v69</span></p>
+        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v70</span></p>
       </div>
     </div>
     <div class="header-btns">
@@ -1258,7 +1258,7 @@ function activeTournament(){
 function ensureTournaments(){
   const list = tournaments();
   if(!list.length){
-    const t = { id: uid(), name: 'Torneo 1', createdAt: Date.now(), teams: [], qualify: 4, generated: false };
+    const t = { id: uid(), name: 'Torneo 1', createdAt: Date.now(), teams: [], qualify: 4, zones: 1, generated: false };
     list.push(t); data.activeTid = t.id;
   }
   if(!activeTournament()) data.activeTid = list[0].id;
@@ -1286,7 +1286,7 @@ function champTeamList(){
 }
 function newTournament(){
   const list = tournaments();
-  const t = { id: uid(), name: 'Torneo '+(list.length+1), createdAt: Date.now(), teams: [], qualify: 4, generated: false };
+  const t = { id: uid(), name: 'Torneo '+(list.length+1), createdAt: Date.now(), teams: [], qualify: 4, zones: 1, generated: false };
   list.push(t); data.activeTid = t.id; save(); render();
 }
 function setActiveTournament(id){ data.activeTid = id; save(); render(); }
@@ -1327,15 +1327,16 @@ function normalizeChamp(){
   if(!old && !champMs.length) return;
   const t = { id: uid(), name: 'Torneo 1', createdAt: Date.now(),
     teams: (old && Array.isArray(old.teams)) ? old.teams.slice() : [],
-    qualify: (old && old.qualify) || 4, generated: champMs.length > 0 };
+    qualify: (old && old.qualify) || 4, zones: 1, generated: champMs.length > 0 };
   if(t.generated && !t.teams.length){
     const set = new Set();
     champMs.forEach(m=>{ if(m.champ.a) set.add(m.champ.a); if(m.champ.b) set.add(m.champ.b); });
     t.teams = Array.from(set);
   }
+  t.zoneTeams = t.teams.length ? [t.teams.slice()] : [];
   data.tournaments = [t];
   data.activeTid = t.id;
-  champMs.forEach(m=>{ m.champ.tid = t.id; });
+  champMs.forEach(m=>{ m.champ.tid = t.id; if(m.champ.zone==null) m.champ.zone = 0; });
   delete data.champ;
   save();
 }
@@ -1357,11 +1358,33 @@ function seedOrder(n){
   while(arr.length<n){ const m=arr.length*2, next=[]; arr.forEach(s=>{ next.push(s); next.push(m+1-s); }); arr=next; }
   return arr.slice(0,n);
 }
-function champStandings(teams){
+function zoneName(i){ return 'Zona ' + String.fromCharCode(65+i); }
+function splitZones(teams, zones){
+  const n = Math.max(1, zones|0);
+  if(n === 1) return [teams.slice()];
+  const arr = teams.slice().sort((a,b)=>a.localeCompare(b,'es'));
+  const out = Array.from({length:n}, ()=>[]);
+  let dir = 1, idx = 0;
+  arr.forEach(t=>{
+    out[idx].push(t);
+    idx += dir;
+    if(idx === n){ idx = n-1; dir = -1; }
+    else if(idx < 0){ idx = 0; dir = 1; }
+  });
+  return out;
+}
+function champZones(teams){
+  const t = ensureTournaments();
+  const z = Math.max(1, t.zones||1);
+  if(t.generated && Array.isArray(t.zoneTeams) && t.zoneTeams.length) return t.zoneTeams;
+  return splitZones(teams, z);
+}
+function champStandings(teams, zone){
   const rows = {};
   teams.forEach(t=> rows[t] = { name:t, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, dg:0, pts:0 });
   champMatches('grupos').forEach(m=>{
     if(!isPlayed(m)) return;
+    if(zone!=null && (m.champ.zone||0)!==zone) return;
     const a=m.champ.a, b=m.champ.b;
     if(!rows[a] || !rows[b]) return;
     const ga=scoreOf(m,'A'), gb=scoreOf(m,'B'), A=rows[a], B=rows[b];
@@ -1399,36 +1422,51 @@ function generateGroups(){
   const t = ensureTournaments();
   const teams = champTeams();
   if(teams.length < 2){ alert('Necesitás al menos 2 equipos. Asigná el campo "Equipo" a los jugadores en la pestaña Jugadores.'); return; }
+  const zones = Math.max(1, t.zones||1);
+  if(zones > teams.length){ alert('No podés tener más zonas ('+zones+') que equipos ('+teams.length+').'); return; }
   if(champMatches('grupos').length || champMatches('elim').length){
     if(!confirm('Este torneo ya tiene partidos. ¿Borrar y reiniciar la primera ronda?')) return;
     data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===t.id));
   }
-  t.teams = teams.slice(); t.generated = true;
+  const zt = splitZones(teams, zones);
+  t.teams = teams.slice(); t.zoneTeams = zt.map(a=>a.slice()); t.generated = true;
   const date = new Date().toISOString().slice(0,10);
-  roundRobin(teams).forEach((pairs, rd)=>{
-    pairs.forEach(([a,b])=>{
-      data.matches.push({ id:uid(), date, mode:'interno', teamAName:a, teamBName:b, rivalName:'',
-        teamA: playersOfTeam(a), teamB: playersOfTeam(b), events:[], mvpId:null, gkId:null,
-        escabio:{}, comments:[], champ:{ phase:'grupos', tid:t.id, round:rd+1, a, b } });
+  zt.forEach((zoneTeams, zi)=>{
+    roundRobin(zoneTeams).forEach((pairs, rd)=>{
+      pairs.forEach(([a,b])=>{
+        data.matches.push({ id:uid(), date, mode:'interno', teamAName:a, teamBName:b, rivalName:'',
+          teamA: playersOfTeam(a), teamB: playersOfTeam(b), events:[], mvpId:null, gkId:null,
+          escabio:{}, comments:[], champ:{ phase:'grupos', tid:t.id, zone:zi, round:rd+1, a, b } });
+      });
     });
   });
   save(); render();
 }
 function generateKnockout(){
   const t = ensureTournaments();
-  const teams = champTeamList();
+  const zones = Math.max(1, t.zones||1);
   const q = t.qualify || 4;
   if(!champMatches('grupos').length){ alert('Primero generá la primera ronda.'); return; }
-  const table = champStandings(teams);
-  if(table.length < q){ alert('No hay suficientes equipos ('+table.length+') para '+q+' clasificados.'); return; }
+  if(q % zones !== 0){ alert('Los clasificados ('+q+') tienen que ser divisibles por la cantidad de zonas ('+zones+').'); return; }
+  const perZone = q / zones;
+  const zoneTables = champZones(champTeamList()).map((teams,i)=> champStandings(teams, i));
+  for(let i=0;i<zoneTables.length;i++){
+    if(zoneTables[i].length < perZone){ alert('La '+zoneName(i)+' tiene '+zoneTables[i].length+' equipos y necesitás al menos '+perZone+' por zona.'); return; }
+  }
   const pend = champMatches('grupos').filter(m=>!isPlayed(m));
   if(pend.length && !confirm('Todavía hay '+pend.length+' partido(s) de la primera ronda sin jugar. ¿Generar la zona eliminatoria igual?')) return;
   if(champMatches('elim').length && !confirm('Ya hay una zona eliminatoria. ¿Regenerarla con las posiciones actuales?')) return;
   data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===t.id && m.champ.phase==='elim'));
-  const qualifiers = table.slice(0,q);
+  const seeds = [];
+  for(let pos=0; pos<perZone; pos++){
+    for(let zi=0; zi<zones; zi++){
+      const row = zoneTables[zi][pos];
+      if(row) seeds.push({ name: row.name, seed: seeds.length+1 });
+    }
+  }
   const order = seedOrder(q), pairs = [];
   for(let i=0;i<order.length;i+=2){
-    pairs.push([ { name:qualifiers[order[i]-1].name, seed:order[i] }, { name:qualifiers[order[i+1]-1].name, seed:order[i+1] } ]);
+    pairs.push([ seeds[order[i]-1], seeds[order[i+1]-1] ]);
   }
   createKoRound(pairs, q, t.id);
   save(); render();
@@ -1454,6 +1492,13 @@ function resetChampionship(){
   save(); render();
 }
 function setChampQualify(q){ champCfg().qualify = q; save(); render(); }
+function setChampZones(z){
+  const t = champCfg();
+  const teams = champTeamList();
+  z = Math.max(1, z|0);
+  if(z > teams.length && teams.length){ alert('No podés tener más zonas ('+z+') que equipos ('+teams.length+').'); return; }
+  t.zones = z; save(); render();
+}
 
 function simularCampeonato(){
   if(!DEMO) return;
@@ -1499,9 +1544,12 @@ function campeonatoHTML(){
   const t = ensureTournaments();
   const teams = champTeamList();
   const q = t.qualify || 4;
+  const zones = Math.max(1, t.zones||1);
+  const perZone = (q % zones === 0) ? q / zones : null;
   const groups = champMatches('grupos');
   const elim = champMatches('elim');
-  const table = champStandings(teams);
+  const zt = champZones(teams);
+  const zoneTables = zt.map((zs,i)=> champStandings(zs, i));
   const curKo = currentKoRound();
 
   const tourCard = `<div class="card">
@@ -1532,13 +1580,21 @@ function campeonatoHTML(){
 
   const formatCard = `<div class="card">
     <h3>Formato</h3>
-    <label style="margin-bottom:6px">Clasificados a la zona eliminatoria</label>
+    <label style="margin-bottom:6px">Zonas (grupos)</label>
+    <div class="toolbar" style="margin-bottom:12px">
+      ${[1,2,4].map(n=>`<button class="btn ${zones===n?'primary':'ghost'} sm" data-action="champ-zones" data-z="${n}">${n===1?'1 zona':n+' zonas'}</button>`).join('')}
+    </div>
+    ${(t.generated && t.zoneTeams && t.zoneTeams.length!==zones) ? `<p class="muted" style="margin:-6px 0 8px">Reiniciá la primera ronda para aplicar el cambio de zonas.</p>` : ''}
+    <label style="margin-bottom:6px">Clasificados a la zona eliminatoria (total)</label>
     <div class="toolbar">
       ${[2,4,8].map(n=>`<button class="btn ${q===n?'primary':'ghost'} sm" data-action="champ-qualify" data-q="${n}">${n} equipos</button>`).join('')}
     </div>
+    <p class="muted" style="margin-top:6px">
+      ${zones>1 ? (perZone!=null ? `Clasifican los <b>${perZone}</b> primeros de cada zona (${zones} zonas).` : `Con ${zones} zonas, los clasificados deben ser ${zones} × N (ej. ${zones*1}, ${zones*2}, ${zones*4}).`) : 'Una sola tabla general.'}
+    </p>
     <div class="toolbar" style="margin-top:10px">
       <button class="btn primary sm" data-action="champ-groups">${groups.length?'Reiniciar primera ronda':'Generar primera ronda'}</button>
-      ${groups.length?`<button class="btn sm" data-action="champ-ko" ${teams.length<q?'disabled':''}>Generar zona eliminatoria</button>`:''}
+      ${groups.length?`<button class="btn sm" data-action="champ-ko" ${perZone==null||!zt.every((zs)=>zs.length>=perZone)?'disabled':''}>Generar zona eliminatoria</button>`:''}
       ${elim.length && curKo>2?`<button class="btn sm" data-action="champ-next">Generar ${koLabel(curKo/2)}</button>`:''}
       ${DEMO && (groups.length||elim.length)?`<button class="btn ghost sm" data-action="champ-sim">Simular resultados</button>`:''}
       ${(groups.length||elim.length)?`<button class="btn danger sm" data-action="champ-reset">Borrar campeonato</button>`:''}
@@ -1546,24 +1602,37 @@ function campeonatoHTML(){
     <p class="muted" style="margin-top:8px">Los partidos del campeonato se cargan igual que cualquier partido (tocá uno para abrirlo y registrar goles). La tabla se arma sola con los resultados.</p>
   </div>`;
 
-  const standingsCard = groups.length ? `<div class="card"><h3>Tabla de posiciones · primera ronda</h3>
-    <div class="table-wrap"><table class="table">
-      <thead><tr><th class="c">#</th><th>Equipo</th><th class="c">PJ</th><th class="c">PG</th><th class="c">PE</th><th class="c">PP</th><th class="c">GF</th><th class="c">GC</th><th class="c">DG</th><th class="c">Pts</th></tr></thead>
-      <tbody>${table.map((r,i)=>`<tr>
-        <td class="c">${i+1}</td><td>${esc(r.name)}${i<q?' <span class="pill gold">clasifica</span>':''}</td>
-        <td class="c">${r.pj}</td><td class="c">${r.pg}</td><td class="c">${r.pe}</td><td class="c">${r.pp}</td>
-        <td class="c">${r.gf}</td><td class="c">${r.gc}</td><td class="c">${r.dg>0?'+':''}${r.dg}</td>
-        <td class="c"><b>${r.pts}</b></td></tr>`).join('')}</tbody>
-    </table></div>
+  const standingsCard = groups.length ? `<div class="card"><h3>Tabla${zones>1?'s':''} de posiciones · primera ronda</h3>
+    ${zoneTables.map((table,zi)=>{
+      if(!table.length) return '';
+      return `<div style="margin-bottom:14px">
+        ${zones>1?`<div class="muted" style="margin:2px 0 6px;font-weight:700">${zoneName(zi)}</div>`:''}
+        <div class="table-wrap"><table class="table">
+          <thead><tr><th class="c">#</th><th>Equipo</th><th class="c">PJ</th><th class="c">PG</th><th class="c">PE</th><th class="c">PP</th><th class="c">GF</th><th class="c">GC</th><th class="c">DG</th><th class="c">Pts</th></tr></thead>
+          <tbody>${table.map((r,i)=>`<tr>
+            <td class="c">${i+1}</td><td>${esc(r.name)}${perZone!=null && i<perZone?' <span class="pill gold">clasifica</span>':''}</td>
+            <td class="c">${r.pj}</td><td class="c">${r.pg}</td><td class="c">${r.pe}</td><td class="c">${r.pp}</td>
+            <td class="c">${r.gf}</td><td class="c">${r.gc}</td><td class="c">${r.dg>0?'+':''}${r.dg}</td>
+            <td class="c"><b>${r.pts}</b></td></tr>`).join('')}</tbody>
+        </table></div>
+      </div>`;
+    }).join('')}
     <p class="muted">PJ jugados · PG ganados · PE empatados · PP perdidos · GF/GC goles a favor y en contra · DG diferencia · Pts puntos (3 por victoria).</p>
   </div>` : '';
 
   const groupsList = groups.length ? `<div class="card"><h3>Partidos de la primera ronda</h3>
-    ${groups.slice().sort((a,b)=>(a.champ.round||0)-(b.champ.round||0) || String(a.champ.a).localeCompare(String(b.champ.a),'es')).map(m=>{
-      const ga=scoreOf(m,'A'), gb=scoreOf(m,'B');
-      return `<div class="assign-row clickable" data-action="open-match" data-id="${m.id}">
-        <span class="pname">${esc(m.champ.a)} <b>${ga} - ${gb}</b> ${esc(m.champ.b)} ${isPlayed(m)?'':'<span class="pill">pendiente</span>'}</span>
-        <span class="muted">Fecha ${m.champ.round} · ${fmtDate(m.date)}</span></div>`;
+    ${zt.map((zs,zi)=>{
+      const ms = groups.filter(m=>(m.champ.zone||0)===zi).sort((a,b)=>(a.champ.round||0)-(b.champ.round||0) || String(a.champ.a).localeCompare(String(b.champ.a),'es'));
+      if(!ms.length) return '';
+      return `<div style="margin-bottom:12px">
+        ${zones>1?`<div class="muted" style="margin:2px 0 6px;font-weight:700">${zoneName(zi)}</div>`:''}
+        ${ms.map(m=>{
+          const ga=scoreOf(m,'A'), gb=scoreOf(m,'B');
+          return `<div class="assign-row clickable" data-action="open-match" data-id="${m.id}">
+            <span class="pname">${esc(m.champ.a)} <b>${ga} - ${gb}</b> ${esc(m.champ.b)} ${isPlayed(m)?'':'<span class="pill">pendiente</span>'}</span>
+            <span class="muted">Fecha ${m.champ.round} · ${fmtDate(m.date)}</span></div>`;
+        }).join('')}
+      </div>`;
     }).join('')}
   </div>` : '';
 
@@ -2194,7 +2263,7 @@ function jugadoresHTML(){
       <details class="help"><summary>7. Escabio y comentarios</summary>
         <p class="muted">En <b>Partidos</b>, en la parte de abajo, elegí el partido en el selector para cargar el <b>Escabio</b> con − / + y dejar <b>comentarios</b> con tu nombre.</p></details>
       <details class="help"><summary>8. Campeonato</summary>
-        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con <b>todo el equipo</b> levantando la copa. Podés tener <b>varios torneos</b> a la vez: el selector <b>Torneos</b> te deja cambiar entre ellos y al crear uno nuevo el anterior queda guardado.</p></details>
+        <p class="muted">En <b>Campeonato</b> agregá los equipos, elegí las <b>zonas</b> (1, 2 o 4) y cuántos <b>clasifican</b> en total (se reparten por zona), y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. Cada zona tiene su tabla y clasifican los mejores de cada una; las llaves se arman evitando cruces de la misma zona. También podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con <b>todo el equipo</b> levantando la copa. Podés tener <b>varios torneos</b> a la vez: el selector <b>Torneos</b> te deja cambiar entre ellos y al crear uno nuevo el anterior queda guardado.</p></details>
       <details class="help"><summary>9. Estadísticas y ranking</summary>
         <p class="muted">En <b>Estadísticas</b> tenés el podio y la tabla completa. Cambiá la categoría con las píldoras de arriba: goles, asistencias, figuras, partidos jugados, victorias y derrotas. Al final hay un gráfico de escabio por partido.</p></details>
       <details class="help"><summary>10. Ficha de cada jugador</summary>
@@ -2674,6 +2743,7 @@ document.addEventListener('click', e=>{
     case 'new-match': openNewMatch(); break;
     case 'create-match': createMatch(); break;
     case 'champ-qualify': setChampQualify(parseInt(t.dataset.q,10)||4); break;
+    case 'champ-zones': setChampZones(parseInt(t.dataset.z,10)||1); break;
     case 'champ-add-team': addChampTeam(); break;
     case 'champ-del-team': delChampTeam(t.dataset.team); break;
     case 'champ-groups': generateGroups(); break;
