@@ -2077,7 +2077,7 @@ function closeModal(){ $('#modal-root').innerHTML = ''; }
 function openNewMatch(){
   const today = new Date().toISOString().slice(0,10);
   const teams = champTeams();
-  const canTeams = teams.length >= 2;
+  const canTeams = DEMO && teams.length >= 2;
   const optsA = teams.map((t,i)=>`<option value="${esc(t)}"${i===0?' selected':''}>${esc(t)}</option>`).join('');
   const optsB = teams.map((t,i)=>`<option value="${esc(t)}"${i===1?' selected':''}>${esc(t)}</option>`).join('');
   openModal(`
