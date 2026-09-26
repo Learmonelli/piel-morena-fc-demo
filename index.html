@@ -109,6 +109,22 @@
     border:2px solid var(--gold);vertical-align:-2px}
   .music-btn.skin-btn{padding:10px 14px}
 
+  /* Celebración del campeón */
+  .champ-card{background:linear-gradient(160deg,var(--card2),var(--card));border:3px solid var(--gold);
+    border-radius:16px;padding:18px 14px;margin-bottom:12px;text-align:center;position:relative;overflow:hidden;
+    box-shadow:0 0 0 3px rgba(242,183,5,.18)}
+  .champ-crown{font-family:var(--font-pixel);font-size:9px;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
+  .champ-name{font-size:20px;font-weight:800;margin:6px 0 12px}
+  .champ-hero{display:flex;flex-direction:column;align-items:center;gap:3px;margin-bottom:10px}
+  .champ-cup{font-size:42px;line-height:1;animation:cupLift 1.3s ease-in-out infinite}
+  .champ-cup-solo{font-size:64px;margin:10px 0}
+  @keyframes cupLift{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-9px) rotate(4deg)}}
+  .champ-hero-name{font-weight:800;font-size:16px}
+  .champ-hero-role{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .champ-squad{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px}
+  .champ-player{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px}
+  .champ-player span{font-size:11px;color:var(--muted);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
   /* Canchita 8-bit de fondo */
   #pitch-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.38}
   #pitch-bg svg{width:100%;height:100%;display:block}
@@ -492,7 +508,7 @@
       </svg>
       <div>
         <h1>Piel Morena FC</h1>
-        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v67</span></p>
+        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v68</span></p>
       </div>
     </div>
     <div class="header-btns">
@@ -621,9 +637,13 @@ function demoSeed(){
     ['Santi Vera','Santi','3',['LD','DFC']],
     ['Julieta Benítez','Juli','11',['EI','ED']],
     ['Gonza Ruiz','Gonza','6',['MCD','DFC']],
-    ['Agustina Pereyra','Agus','14',['MI','MC']]
+    ['Agustina Pereyra','Agus','14',['MI','MC']],
+    ['Lucas Herrera','Lucho','10',['MCO','DC']],
+    ['Brenda Ríos','Bren','2',['DFC','LD']],
+    ['Matías Quiroga','Mati','7',['ED','EI']],
+    ['Carla Gómez','Carli','9',['DC','SD']]
   ];
-  const demoTeams = ['Los Pibes FC','Deportivo Resaca','Barrio Sur FC'];
+  const demoTeams = ['Los Pibes FC','Deportivo Resaca','Barrio Sur FC','Atlético Tripa'];
   const players = roster.map(([name,nickname,number,positions],i)=>({
     id:'demo_p'+i, name, nickname, number, positions, guest:false, team: demoTeams[Math.floor(i/4)], face: randomFace()
   }));
@@ -1374,6 +1394,67 @@ function resetChampionship(){
 }
 function setChampQualify(q){ champCfg().qualify = q; save(); render(); }
 
+function simularCampeonato(){
+  if(!DEMO) return;
+  const pend = data.matches.filter(m=>isChampMatch(m) && !isPlayed(m));
+  if(!pend.length){ alert('No hay partidos de campeonato pendientes. Generá la primera ronda o la próxima fase.'); return; }
+  const roll = () => Math.floor(Math.random()*5);
+  pend.forEach(m=>{
+    let ga = roll(), gb = roll();
+    if(m.champ && m.champ.phase==='elim' && ga===gb){ if(Math.random()<0.5) ga++; else gb++; }
+    const addGoals = (side,n)=>{
+      const roster = side==='A' ? (m.teamA||[]) : (m.teamB||[]);
+      for(let i=0;i<n;i++){
+        const scorerId = roster.length ? roster[Math.floor(Math.random()*roster.length)] : '';
+        m.events.push({ id:uid(), side, scorerId, assistId:'' });
+      }
+    };
+    m.events = [];
+    addGoals('A', ga); addGoals('B', gb);
+    m.closed = true;
+  });
+  save(); render();
+}
+
+function champAwardStats(roster){
+  const stat = {};
+  roster.forEach(id=> stat[id] = { id, mvp:0, goals:0, assists:0 });
+  data.matches.filter(m=>isChampMatch(m)).forEach(m=>{
+    if(m.mvpId && stat[m.mvpId]) stat[m.mvpId].mvp++;
+    (m.events||[]).forEach(e=>{
+      if(e.scorerId && stat[e.scorerId]) stat[e.scorerId].goals++;
+      if(e.assistId && stat[e.assistId]) stat[e.assistId].assists++;
+    });
+  });
+  return roster.map(id=>stat[id]).sort((a,b)=> (b.mvp*3+b.goals) - (a.mvp*3+a.goals) || b.assists-a.assists);
+}
+function championCardHTML(){
+  const final = koRoundMatches(2)[0];
+  if(!final || !isPlayed(final)) return '';
+  const name = koWinner(final).name;
+  const roster = playersOfTeam(name);
+  const stats = champAwardStats(roster);
+  const bestId = stats.length ? stats[0].id : null;
+  const best = bestId ? getPlayer(bestId) : null;
+  const others = roster.filter(id=>id!==bestId);
+  const hero = best ? `<div class="champ-hero">
+      <div class="champ-cup">🏆</div>
+      ${playerAvatar(best, 76)}
+      <div class="champ-hero-name">${esc(pname(bestId))}</div>
+      <div class="champ-hero-role">Figura del campeón</div>
+    </div>` : `<div class="champ-cup champ-cup-solo">🏆</div>`;
+  const squad = others.length ? `<div class="champ-squad">${others.map(id=>{
+    const p = getPlayer(id); if(!p) return '';
+    return `<div class="champ-player">${playerAvatarBust(p,32)}<span>${esc(pname(id))}</span></div>`;
+  }).join('')}</div>` : '';
+  return `<div class="champ-card">
+    <div class="champ-crown">Campeón del torneo</div>
+    <div class="champ-name">${esc(name)}</div>
+    ${hero}
+    ${squad}
+  </div>`;
+}
+
 function campeonatoHTML(){
   const teams = champTeams();
   const q = champCfg().qualify || 4;
@@ -1404,6 +1485,7 @@ function campeonatoHTML(){
       <button class="btn primary sm" data-action="champ-groups">${groups.length?'Reiniciar primera ronda':'Generar primera ronda'}</button>
       ${groups.length?`<button class="btn sm" data-action="champ-ko" ${teams.length<q?'disabled':''}>Generar zona eliminatoria</button>`:''}
       ${elim.length && curKo>2?`<button class="btn sm" data-action="champ-next">Generar ${koLabel(curKo/2)}</button>`:''}
+      ${DEMO && (groups.length||elim.length)?`<button class="btn ghost sm" data-action="champ-sim">Simular resultados</button>`:''}
       ${(groups.length||elim.length)?`<button class="btn danger sm" data-action="champ-reset">Borrar campeonato</button>`:''}
     </div>
     <p class="muted" style="margin-top:8px">Los partidos del campeonato se cargan igual que cualquier partido (tocá uno para abrirlo y registrar goles). La tabla se arma sola con los resultados.</p>
@@ -1433,8 +1515,6 @@ function campeonatoHTML(){
   let bracketCard = '';
   if(elim.length){
     const sizes = Array.from(new Set(elim.map(m=>m.champ.roundSize))).sort((a,b)=>b-a);
-    const final = koRoundMatches(2)[0];
-    const champion = (final && isPlayed(final)) ? `<p style="text-align:center;font-size:18px"><b>🏆 Campeón: ${esc(koWinner(final).name)}</b></p>` : '';
     bracketCard = `<div class="card"><h3>Zona eliminatoria</h3>` + sizes.map(size=>{
       const ms = koRoundMatches(size);
       return `<div style="margin-bottom:10px"><div class="muted" style="margin:4px 0">${koLabel(size)}</div>` +
@@ -1445,10 +1525,11 @@ function campeonatoHTML(){
             <span class="pname">${esc(m.champ.a)} <b>${scoreOf(m,'A')} - ${scoreOf(m,'B')}</b> ${esc(m.champ.b)}</span>
             <span class="muted">${tag}</span></div>`;
         }).join('') + `</div>`;
-    }).join('') + champion + `</div>`;
+    }).join('') + `</div>`;
   }
 
-  return `<div class="section-head"><h2>Campeonato</h2></div>` + teamsCard + formatCard + standingsCard + groupsList + bracketCard;
+  const champCard = championCardHTML();
+  return `<div class="section-head"><h2>Campeonato</h2></div>` + champCard + teamsCard + formatCard + standingsCard + groupsList + bracketCard;
 }
 
 /* ---------- render ---------- */
@@ -2055,7 +2136,7 @@ function jugadoresHTML(){
       <details class="help"><summary>7. Escabio y comentarios</summary>
         <p class="muted">En <b>Partidos</b>, en la parte de abajo, elegí el partido en el selector para cargar el <b>Escabio</b> con − / + y dejar <b>comentarios</b> con tu nombre.</p></details>
       <details class="help"><summary>8. Campeonato</summary>
-        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente.</p></details>
+        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con la <b>figura</b> y el plantel levantando la copa.</p></details>
       <details class="help"><summary>9. Estadísticas y ranking</summary>
         <p class="muted">En <b>Estadísticas</b> tenés el podio y la tabla completa. Cambiá la categoría con las píldoras de arriba: goles, asistencias, figuras, partidos jugados, victorias y derrotas. Al final hay un gráfico de escabio por partido.</p></details>
       <details class="help"><summary>10. Ficha de cada jugador</summary>
@@ -2541,6 +2622,7 @@ document.addEventListener('click', e=>{
     case 'champ-ko': generateKnockout(); break;
     case 'champ-next': generateNextKo(); break;
     case 'champ-reset': resetChampionship(); break;
+    case 'champ-sim': simularCampeonato(); break;
     case 'add-player': addPlayer(); break;
     case 'add-guest': addGuest(t.dataset.side); break;
     case 'del-player': delPlayer(id); break;
