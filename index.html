@@ -4,6 +4,17 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <meta name="theme-color" content="#0c2814">
+<script>
+(function(){
+  try{
+    var demo=/[?&]demo(=|&|$)/.test(location.search)||/demo\.html$/i.test(location.pathname);
+    if(!demo) return;
+    var s=localStorage.getItem('pmfc_skin_demo');
+    if(['clasico','azul','vino','violeta','rosa','naranja'].indexOf(s)<0) s='azul';
+    document.documentElement.setAttribute('data-skin',s);
+  }catch(e){}
+})();
+</script>
 <title>Piel Morena FC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,13 +26,16 @@
     --gold:#ffd23f; --gold-d:#d9a400;
     --burgundy:#8a2334; --purple:#8a4fbf; --green:#5fd35f; --red:#ff5a5f;
     --skin:#b5703c; --cream:#f3ead6;
+    --ctrl-bg:#330f1c; --field-bg:#320d18; --field-border:#240a12;
+    --soft-line:rgba(74,33,48,.55); --soft-line2:rgba(74,33,48,.45);
+    --bg-glow:#1c5a33; --rules-bg:#0a1a10; --rules-fg:#bfe08a;
     --font-body:'VT323',ui-monospace,Consolas,monospace;
     --font-pixel:'Press Start 2P',ui-monospace,Consolas,monospace;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    background:radial-gradient(1200px 600px at 50% -200px,#1c5a33 0%,var(--bg) 60%) fixed;
+    background:radial-gradient(1200px 600px at 50% -200px,#1c5a33 0%,#0c2814 60%) fixed;
     color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -33,21 +47,67 @@
     font-weight:800;text-align:center;border-radius:10px;padding:9px 12px;margin:12px 0 0;
     font-size:14px;letter-spacing:.5px;text-transform:uppercase;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
 
-  body.demo{
-    --bg:#0a1024; --bg2:#122140; --card:#122140; --card2:#1b3160; --line:#2f4f8f;
-    --txt:#ffffff; --muted:#aac2ea;
-    --gold:#febe10; --gold-d:#d19a00; --burgundy:#00529f; --purple:#5b8ad6;
-    background:radial-gradient(1200px 600px at 50% -200px,#123a7a 0%,var(--bg) 60%) fixed;
+  /* ===== Skins (colores seleccionables, solo demo) =====
+     OJO: la canchita de fondo queda fija (no depende del skin). */
+  html[data-skin="clasico"]{
+    --card:#3f111e; --card2:#52182a; --bg2:#3f111e; --line:#7a2a3c;
+    --txt:#eafff0; --muted:#9fd3ac; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#8a2334; --purple:#8a4fbf;
+    --ctrl-bg:#330f1c; --field-bg:#320d18; --field-border:#240a12;
+    --soft-line:rgba(74,33,48,.55); --soft-line2:rgba(74,33,48,.45);
+    --rules-bg:#0a1a10; --rules-fg:#bfe08a;
   }
-  body.demo .music-btn,body.demo .tabs{background:#16294d}
-  body.demo input,body.demo select,body.demo textarea,
-  body.demo .tile,body.demo .podium-item{background:#0c1830}
-  body.demo .tabs,body.demo .card,body.demo input,body.demo select,
-  body.demo textarea,body.demo .face-preview{border-color:#081326}
-  body.demo pre.rules{background:#0c1830}
-  body.demo .assign-row,body.demo .comment,body.demo .goal-row,
-  body.demo .log-row,body.demo .rank-row,body.demo details.help,
-  body.demo .table td{border-color:rgba(255,255,255,.09)}
+  html[data-skin="azul"]{
+    --card:#1c4796; --card2:#245bbf; --bg2:#1c4796; --line:#6fa3ff;
+    --txt:#eef4ff; --muted:#bcd3f7; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#3f86ef; --purple:#8fb4f5;
+    --ctrl-bg:#143a7e; --field-bg:#123a78; --field-border:#0d2a5c;
+    --soft-line:rgba(111,163,255,.42); --soft-line2:rgba(111,163,255,.3);
+    --rules-bg:#10306a; --rules-fg:#cfe0ff;
+  }
+  html[data-skin="vino"]{
+    --card:#9c1a3f; --card2:#bd2450; --bg2:#9c1a3f; --line:#ff7a9e;
+    --txt:#fff0f4; --muted:#f7bfd0; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#d92e5e; --purple:#e0709f;
+    --ctrl-bg:#6f1030; --field-bg:#630e2c; --field-border:#470a20;
+    --soft-line:rgba(255,122,158,.4); --soft-line2:rgba(255,122,158,.28);
+    --rules-bg:#5c0d28; --rules-fg:#ffd0de;
+  }
+  html[data-skin="violeta"]{
+    --card:#5a2bb5; --card2:#7140d4; --bg2:#5a2bb5; --line:#b18cff;
+    --txt:#f6f0ff; --muted:#d7c7fa; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#8b52e0; --purple:#b48cff;
+    --ctrl-bg:#3f1a8c; --field-bg:#3a187f; --field-border:#2a1160;
+    --soft-line:rgba(177,140,255,.42); --soft-line2:rgba(177,140,255,.3);
+    --rules-bg:#341570; --rules-fg:#e2d6ff;
+  }
+  html[data-skin="rosa"]{
+    --card:#c0207a; --card2:#e02f92; --bg2:#c0207a; --line:#ff8fc4;
+    --txt:#fff0f7; --muted:#f9c3dd; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#e64a9c; --purple:#f08fc4;
+    --ctrl-bg:#8f1260; --field-bg:#7e1054; --field-border:#5c0b3d;
+    --soft-line:rgba(255,143,196,.4); --soft-line2:rgba(255,143,196,.28);
+    --rules-bg:#76104f; --rules-fg:#ffd6ea;
+  }
+  html[data-skin="naranja"]{
+    --card:#b8540f; --card2:#d96a16; --bg2:#b8540f; --line:#ffab63;
+    --txt:#fff3e6; --muted:#f7cf9f; --gold:#ffd23f; --gold-d:#d9a400;
+    --burgundy:#e8781f; --purple:#f0a860;
+    --ctrl-bg:#8a3a09; --field-bg:#7a3308; --field-border:#582505;
+    --soft-line:rgba(255,171,99,.4); --soft-line2:rgba(255,171,99,.28);
+    --rules-bg:#713006; --rules-fg:#ffe2c2;
+  }
+  /* Selector de skin */
+  .skin-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .skin-swatch{display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;
+    border:2px solid var(--line);border-radius:12px;padding:8px 10px;cursor:pointer;font-family:inherit}
+  .skin-swatch.on{border-color:var(--gold);box-shadow:0 0 0 2px rgba(242,183,5,.25)}
+  .skin-dot{width:30px;height:30px;border-radius:50%;border:3px solid var(--gold);display:block}
+  .skin-name{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .skin-swatch.on .skin-name{color:var(--txt)}
+  .skin-dot-mini{display:inline-block;width:14px;height:14px;border-radius:50%;
+    border:2px solid var(--gold);vertical-align:-2px}
+  .music-btn.skin-btn{padding:10px 14px}
 
   /* Canchita 8-bit de fondo */
   #pitch-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.38}
@@ -58,11 +118,11 @@
   /* Header */
   .app-header{padding:22px 0 14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;column-gap:10px;row-gap:8px}
   .brand{flex:1 1 170px;min-width:0}
-  .music-btn{background:#330f1c;border:1px solid var(--line);color:var(--gold);
+  .music-btn{background:var(--ctrl-bg);border:1px solid var(--line);color:var(--gold);
     border-radius:12px;padding:10px 14px;cursor:pointer;font-family:inherit;
     font-weight:700;font-size:13px;transition:.15s;white-space:nowrap}
   .music-btn.playing{background:linear-gradient(145deg,#ffd23f,var(--gold-d));color:#2a1706;border-color:var(--gold)}
-  .header-btns{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
+  .header-btns{display:flex;gap:6px;flex:0 1 auto;min-width:0;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
   .header-btns .music-btn{padding:10px 10px;font-size:12px}
   @media (max-width:430px){
     .brand h1{font-size:10px}
@@ -70,13 +130,14 @@
     .header-btns .music-btn{padding:9px 8px;font-size:11px}
   }
   .brand{display:flex;align-items:center;gap:12px}
+  .brand > div{min-width:0}
   .crest{width:52px;height:58px;flex:0 0 auto;
     filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
   .brand h1{margin:0;font-size:19px;letter-spacing:.3px}
-  .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
   /* Tabs */
-  .tabs{display:flex;gap:6px;background:#330f1c;border:1px solid var(--line);
+  .tabs{display:flex;gap:6px;background:var(--ctrl-bg);border:1px solid var(--line);
     border-radius:14px;padding:5px;margin-bottom:18px}
   .tabs button{
     flex:1;border:0;background:transparent;color:var(--muted);font-weight:600;
@@ -130,7 +191,7 @@
 
   /* Forms */
   label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:12px}
-  input,select{width:100%;margin-top:6px;background:#320d18;border:1px solid var(--line);
+  input,select{width:100%;margin-top:6px;background:var(--field-bg);border:1px solid var(--line);
     color:var(--txt);border-radius:11px;padding:12px;font-size:15px;font-family:inherit}
   input:focus,select:focus{outline:none;border-color:var(--gold)}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -140,7 +201,7 @@
 
   /* Assign rows */
   .assign-row{display:flex;align-items:center;justify-content:space-between;
-    padding:9px 0;border-bottom:1px solid rgba(74,33,48,.55)}
+    padding:9px 0;border-bottom:1px solid var(--soft-line)}
   .assign-row:last-child{border-bottom:0}
   .assign-row .pname{font-size:14px;display:flex;align-items:center;gap:6px}
   .num{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 5px;
@@ -151,7 +212,7 @@
   .face-editor{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
   .face-preview{display:flex;justify-content:center;position:sticky;-webkit-position:sticky;
     top:0;z-index:6;background:var(--card);padding:12px 0;margin:0 0 8px;
-    border-bottom:3px solid #240a12;box-shadow:0 6px 10px -6px rgba(0,0,0,.6)}
+    border-bottom:3px solid var(--field-border);box-shadow:0 6px 10px -6px rgba(0,0,0,.6)}
   .face-preview svg{height:84px;width:auto;background:transparent}
   .face-controls{display:flex;flex-direction:column;gap:8px}
   .face-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -185,10 +246,10 @@
   .dot-off{background:#9fd3ac}
   .dot-err{background:var(--red)}
   .dot-idle{background:var(--muted)}
-  textarea{width:100%;margin-top:6px;background:#320d18;border:2px solid #240a12;color:var(--txt);
+  textarea{width:100%;margin-top:6px;background:var(--field-bg);border:2px solid var(--field-border);color:var(--txt);
     border-radius:8px;padding:12px;font-size:15px;font-family:var(--font-body);resize:vertical}
-  pre.rules{background:#0a1a10;border:1px solid var(--line);border-radius:8px;padding:10px;
-    font-size:11px;line-height:1.5;overflow-x:auto;color:#bfe08a;white-space:pre}
+  pre.rules{background:var(--rules-bg);border:1px solid var(--line);border-radius:8px;padding:10px;
+    font-size:11px;line-height:1.5;overflow-x:auto;color:var(--rules-fg);white-space:pre}
   .side-btns{display:flex;gap:6px}
   .sidebtn{background:transparent;border:1px solid var(--line);color:var(--muted);
     border-radius:9px;padding:7px 13px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
@@ -203,7 +264,7 @@
 
   /* Goals */
   .goal-row{display:flex;align-items:center;gap:10px;padding:9px 0;
-    border-bottom:1px solid rgba(74,33,48,.55)}
+    border-bottom:1px solid var(--soft-line)}
   .goal-row:last-child{border-bottom:0}
   .goal-side{font-size:11px;font-weight:700;color:var(--gold);background:rgba(242,183,5,.12);
     padding:3px 8px;border-radius:7px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
@@ -214,7 +275,7 @@
   .table{width:100%;border-collapse:collapse;font-size:13px}
   .table th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;
     letter-spacing:.5px;padding:8px 5px;border-bottom:1px solid var(--line)}
-  .table td{padding:9px 5px;border-bottom:1px solid rgba(74,33,48,.45)}
+  .table td{padding:9px 5px;border-bottom:1px solid var(--soft-line2)}
   .table th.c,.table td.c{text-align:center;width:30px;padding-left:2px;padding-right:2px}
   .table th.c{font-size:9px;letter-spacing:.2px}
   .table tr:first-child td .rk{color:var(--gold)}
@@ -228,7 +289,7 @@
     padding:5px 12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
   .cat-pill.on{background:var(--gold);border-color:var(--gold);color:#2a1706}
   .podium{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;align-items:end}
-  .podium-item{background:#320d18;border:2px solid var(--line);border-radius:12px;padding:10px 6px;
+  .podium-item{background:var(--field-bg);border:2px solid var(--line);border-radius:12px;padding:10px 6px;
     text-align:center;position:relative}
   .podium-item.p1{border-color:var(--gold);box-shadow:0 0 0 2px rgba(242,183,5,.25)}
   .podium-item.p2{border-color:#cfd8dc}
@@ -249,7 +310,7 @@
   .podium-wrap .podium{flex:1 1 210px;margin-bottom:0}
   .cat-help{flex:1 1 150px;background:rgba(242,183,5,.08);border:2px solid var(--line);border-radius:12px;
     padding:10px 12px;font-size:12px;line-height:1.45;color:var(--muted);display:flex;align-items:center}
-  .rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(74,33,48,.55)}
+  .rank-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--soft-line)}
   .rank-row:last-child{border-bottom:0}
   .rank-pos{width:24px;text-align:center;font-weight:800;color:var(--muted);font-size:13px;flex:0 0 auto}
   .rank-name{flex:1;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -266,7 +327,7 @@
   .name-line input{margin-top:0;flex:1}
   .name-face{flex:0 0 auto;display:flex}
   .comment-head .pixel-avatar{flex:0 0 auto}
-  .comment{border-bottom:1px solid rgba(74,33,48,.55);padding:8px 0}
+  .comment{border-bottom:1px solid var(--soft-line);padding:8px 0}
   .comment:last-child{border-bottom:0}
   .comment-head{display:flex;align-items:center;gap:8px}
   .comment-head b{font-size:14px}
@@ -275,7 +336,7 @@
   .comment-text{margin:4px 0 0;font-size:15px;word-break:break-word;white-space:pre-wrap}
 
   /* Ayuda */
-  details.help{border-bottom:1px solid rgba(74,33,48,.55);padding:9px 0}
+  details.help{border-bottom:1px solid var(--soft-line);padding:9px 0}
   details.help:last-child{border-bottom:0}
   details.help summary{cursor:pointer;font-weight:700;font-size:15px;list-style:none}
   details.help summary::-webkit-details-marker{display:none}
@@ -305,7 +366,7 @@
   .profile-top h2{margin:0;font-size:20px}
   .profile-top p{margin:3px 0 0;font-size:12px}
   .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .tile{background:#320d18;border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}
+  .tile{background:var(--field-bg);border:1px solid var(--line);border-radius:12px;padding:10px 4px;text-align:center}
   .tile-num{display:block;font-size:20px;font-weight:800;line-height:1.15}
   .tile-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
   .streak-box{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;
@@ -315,7 +376,7 @@
   .streak-item + .streak-item{border-left:1px solid rgba(242,183,5,.3)}
   .streak-num{font-size:26px;font-weight:800;color:var(--gold);line-height:1.1}
   .streak-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
-  .log-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(74,33,48,.55)}
+  .log-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--soft-line)}
   .log-row:last-child{border-bottom:0}
   .res{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;font-size:12px;font-weight:800}
   .res.win{background:rgba(139,195,74,.2);color:#bfe08a}
@@ -349,9 +410,9 @@
   .brand p{font-size:16px;font-family:var(--font-body)}
   h2,h3{font-family:var(--font-pixel);font-size:10px;line-height:1.7;letter-spacing:.5px}
   .section-head h2{font-size:10px}
-  .tabs{border:3px solid #240a12;border-radius:12px;padding:6px}
+  .tabs{border:3px solid var(--field-border);border-radius:12px;padding:6px}
   .tabs button{font-family:var(--font-pixel);font-size:8px;line-height:1.6;padding:12px 4px;letter-spacing:0}
-  .card{border:3px solid #240a12;border-radius:12px;box-shadow:6px 6px 0 rgba(0,0,0,.42)}
+  .card{border:3px solid var(--field-border);border-radius:12px;box-shadow:6px 6px 0 rgba(0,0,0,.42)}
   .btn{border-radius:8px;font-family:var(--font-body);font-size:19px;letter-spacing:.5px;
     text-transform:uppercase}
   .btn.primary{box-shadow:3px 3px 0 rgba(0,0,0,.5)}
@@ -359,7 +420,7 @@
   .btn.danger{border:2px solid #5a2028;box-shadow:3px 3px 0 rgba(0,0,0,.3)}
   .sidebtn{border:2px solid var(--line);font-family:var(--font-body);font-size:15px}
   .sidebtn.on{box-shadow:2px 2px 0 rgba(0,0,0,.5)}
-  input,select{border:2px solid #240a12;border-radius:8px;font-family:var(--font-body);font-size:19px}
+  input,select{border:2px solid var(--field-border);border-radius:8px;font-family:var(--font-body);font-size:19px}
   .muted{font-size:15px}
   .date{font-size:14px}
   .match-title{font-size:18px}
@@ -417,8 +478,8 @@
           <clipPath id="sh"><path d="M12 4 H88 V58 C88 82 50 108 50 108 C50 108 12 82 12 58 Z"/></clipPath>
         </defs>
         <g clip-path="url(#sh)">
-          <rect x="12" y="4" width="38" height="104" fill="#7d2233"/>
-          <rect x="50" y="4" width="38" height="104" fill="#f2b705"/>
+          <rect class="crest-c1" x="12" y="4" width="38" height="104" fill="#7d2233"/>
+          <rect class="crest-c2" x="50" y="4" width="38" height="104" fill="#f2b705"/>
         </g>
         <g transform="rotate(-8 50 62)">
           <rect x="18" y="55" width="14" height="14" rx="6" fill="#8bc34a"/>
@@ -431,11 +492,12 @@
       </svg>
       <div>
         <h1>Piel Morena FC</h1>
-        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v66</span></p>
+        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v67</span></p>
       </div>
     </div>
     <div class="header-btns">
       <button class="music-btn" id="music-btn" data-action="toggle-music">Himno</button>
+      <button class="music-btn skin-btn" id="skin-btn" data-action="open-skins" style="display:none" title="Color de la app" aria-label="Color de la app"><span class="skin-dot-mini" id="skin-dot-mini"></span></button>
       <button class="music-btn" id="sfx-btn" data-action="toggle-sfx">Sonido</button>
     </div>
   </header>
@@ -458,6 +520,62 @@ let rankCat = 'goles';
 let escabioMatchId = null;
 let commentName = localStorage.getItem('pmfc_name') || '';
 let playerEditMode = false;
+
+/* ---------- Skins de color (solo en la demo) ---------- */
+const SKIN_KEY = 'pmfc_skin_demo';
+const SKINS = {
+  clasico: {label:'Clásico', c1:'#52182a', c2:'#3f111e', gold:'#ffd23f', burgundy:'#8a2334'},
+  azul:    {label:'Azul',    c1:'#245bbf', c2:'#1c4796', gold:'#ffd23f', burgundy:'#3f86ef'},
+  vino:    {label:'Vino',    c1:'#bd2450', c2:'#9c1a3f', gold:'#ffd23f', burgundy:'#d92e5e'},
+  violeta: {label:'Violeta', c1:'#7140d4', c2:'#5a2bb5', gold:'#ffd23f', burgundy:'#8b52e0'},
+  rosa:    {label:'Rosa',    c1:'#e02f92', c2:'#c0207a', gold:'#ffd23f', burgundy:'#e64a9c'},
+  naranja: {label:'Naranja', c1:'#d96a16', c2:'#b8540f', gold:'#ffd23f', burgundy:'#e8781f'}
+};
+const SKIN_ORDER = ['clasico','azul','vino','violeta','rosa','naranja'];
+function getSkin(){
+  const s = localStorage.getItem(SKIN_KEY);
+  return SKINS[s] ? s : 'azul';
+}
+function applySkin(k){
+  if(!DEMO) return;
+  if(!SKINS[k]) k = 'azul';
+  const s = SKINS[k];
+  document.documentElement.setAttribute('data-skin', k);
+  document.querySelectorAll('.crest .crest-c1').forEach(e=>e.setAttribute('fill', s.burgundy));
+  document.querySelectorAll('.crest .crest-c2').forEach(e=>e.setAttribute('fill', s.gold));
+}
+function renderSkinButton(){
+  const btn = document.getElementById('skin-btn');
+  if(!btn || !DEMO) return;
+  const s = SKINS[getSkin()] || SKINS.azul;
+  const dot = document.getElementById('skin-dot-mini');
+  if(dot) dot.style.background = `radial-gradient(circle at 50% 30%,${s.c1},${s.c2})`;
+}
+function openSkins(){
+  if(!DEMO) return;
+  openModal(`<h3>Color de la app</h3>
+    <p class="muted">Elegí un color para la demo. La canchita de fondo queda igual.</p>
+    ${skinsHTML()}
+    <div class="modal-actions"><button class="btn ghost" data-action="modal-close">Cerrar</button></div>`);
+}
+function setSkin(k){
+  if(!DEMO || !SKINS[k]) return;
+  localStorage.setItem(SKIN_KEY, k);
+  applySkin(k);
+  renderSkinButton();
+  if(document.querySelector('#modal-root .skin-grid')) openSkins();
+  render();
+}
+function skinsHTML(){
+  const cur = getSkin();
+  return `<div class="skin-grid">`+SKIN_ORDER.map(k=>{
+    const s = SKINS[k];
+    return `<button type="button" class="skin-swatch ${cur===k?'on':''}" data-action="set-skin" data-skin="${k}" title="${s.label}">
+      <span class="skin-dot" style="background:radial-gradient(circle at 50% 30%,${s.c1},${s.c2})"></span>
+      <span class="skin-name">${s.label}</span>
+    </button>`;
+  }).join('')+`</div>`;
+}
 
 /* ---------- Admin (solo este mail puede borrar partidos) ---------- */
 const ADMIN_EMAIL = 'leandroarmonelli@gmail.com';
@@ -505,10 +623,11 @@ function demoSeed(){
     ['Gonza Ruiz','Gonza','6',['MCD','DFC']],
     ['Agustina Pereyra','Agus','14',['MI','MC']]
   ];
+  const demoTeams = ['Los Pibes FC','Deportivo Resaca','Barrio Sur FC'];
   const players = roster.map(([name,nickname,number,positions],i)=>({
-    id:'demo_p'+i, name, nickname, number, positions, guest:false, face: randomFace()
+    id:'demo_p'+i, name, nickname, number, positions, guest:false, team: demoTeams[Math.floor(i/4)], face: randomFace()
   }));
-  players.push({ id:'demo_guest', name:'Rocío (invitada)', nickname:'Rocío', number:'', positions:['MC'], guest:true, face: randomFace() });
+  players.push({ id:'demo_guest', name:'Rocío (invitada)', nickname:'Rocío', number:'', positions:['MC'], guest:true, team:'', face: randomFace() });
 
   const teamNames = ['Equipo Negro','Equipo Rojo','Equipo Verde','Equipo Azul','Equipo Blanco','Equipo Violeta'];
   const rivals = ['Los Guapos FC','Barrio Sur FC','Deportivo Resaca','Los Pibes'];
@@ -568,19 +687,26 @@ function demoSeed(){
     for(let c=0;c<nc;c++){ const [author,text] = pick(commentsPool); m.comments.push({ id:'demo_m'+i+'_c'+c, author, text, ts: d.getTime() + (c+1)*3600000 }); }
     matches.push(m);
   }
-  return { players, matches };
+
+  const seedDate = new Date().toISOString().slice(0,10);
+  const idsOfTeam = name => players.filter(p=>!p.guest && p.team===name).map(p=>p.id);
+  roundRobin(demoTeams).forEach((pairs, rd)=>{
+    pairs.forEach(([ta,tb])=>{
+      const m = { id:'demo_ch_'+rd+'_'+ta.replace(/\s+/g,''), date: seedDate, mode:'interno',
+        teamAName: ta, teamBName: tb, rivalName:'', teamA: idsOfTeam(ta), teamB: idsOfTeam(tb),
+        events:[], mvpId:null, gkId:null, escabio:{}, comments:[], closed:true,
+        champ:{ phase:'grupos', round: rd+1, a:ta, b:tb } };
+      for(let g=0, n=ri(4); g<n; g++){ const sc=idsOfTeam(ta); if(sc.length) m.events.push({ id:m.id+'_a'+g, side:'A', scorerId:pick(sc), assistId:'' }); }
+      for(let g=0, n=ri(4); g<n; g++){ const sc=idsOfTeam(tb); if(sc.length) m.events.push({ id:m.id+'_b'+g, side:'B', scorerId:pick(sc), assistId:'' }); }
+      matches.push(m);
+    });
+  });
+  return { players, matches, champ:{ qualify:4 } };
 }
 
 /* ---------- Nube (Firebase / Firestore) ---------- */
 const FBCFG_KEY = 'pielmorenafc_fbconfig';
-const DEFAULT_FB_CONFIG = {
-  apiKey: "AIzaSyCwWiw-_4CSzSv5jXeHYd9eHwzOoUrssOQ",
-  authDomain: "piel-morena-fc.firebaseapp.com",
-  projectId: "piel-morena-fc",
-  storageBucket: "piel-morena-fc.firebasestorage.app",
-  messagingSenderId: "198605126708",
-  appId: "1:198605126708:web:d3c0f2de78e18041e01e61"
-};
+const DEFAULT_FB_CONFIG = null;
 let fbConfig = loadFbConfig();
 let db = null;
 let cloudStarted = false;
@@ -1104,12 +1230,234 @@ function faceForName(name, size){
   return avatarSVG('who:'+(name||'?'), size, null, 'bust');
 }
 
+/* ---------- Campeonato ---------- */
+function champCfg(){ if(!data.champ || typeof data.champ!=='object') data.champ = {}; return data.champ; }
+function champExplicitTeams(){
+  const c = champCfg();
+  if(!Array.isArray(c.teams)) c.teams = [];
+  return c.teams;
+}
+function isExplicitTeam(name){ return champExplicitTeams().some(t=>String(t||'').trim()===name); }
+function champTeams(){
+  const set = new Set();
+  champExplicitTeams().forEach(t=>{ t = String(t||'').trim(); if(t) set.add(t); });
+  data.players.forEach(p=>{ if(p.guest) return; const t = (p.team||'').trim(); if(t) set.add(t); });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+}
+function addChampTeam(){
+  const el = document.getElementById('champ-team');
+  const name = el ? el.value.trim() : '';
+  if(!name){ alert('Escribí el nombre del equipo.'); return; }
+  if(champTeams().some(t=>t.toLowerCase()===name.toLowerCase())){ alert('Ese equipo ya existe.'); return; }
+  champExplicitTeams().push(name);
+  save(); render();
+}
+function delChampTeam(name){
+  const c = champCfg();
+  if(!Array.isArray(c.teams)) return;
+  const used = data.players.some(p=>!p.guest && (p.team||'').trim()===name);
+  if(used && !confirm('Hay jugadores asignados a "'+name+'". ¿Quitar el equipo igual? (los jugadores mantienen el nombre)')) return;
+  c.teams = c.teams.filter(t=>t!==name);
+  save(); render();
+}
+function playersOfTeam(name){ return data.players.filter(p=>!p.guest && (p.team||'').trim()===name).map(p=>p.id); }
+function isChampMatch(m){ return !!(m && m.champ); }
+function champMatches(phase){ return data.matches.filter(m=>m.champ && m.champ.phase===phase); }
+function isPlayed(m){ return !!(m && (m.closed || (m.events||[]).length)); }
+function roundRobin(teams){
+  const list = teams.slice();
+  if(list.length % 2) list.push(null);
+  const n = list.length, rounds = [];
+  for(let r=0;r<n-1;r++){
+    const pairs = [];
+    for(let i=0;i<n/2;i++){ const a=list[i], b=list[n-1-i]; if(a && b) pairs.push([a,b]); }
+    rounds.push(pairs);
+    list.splice(1,0,list.pop());
+  }
+  return rounds;
+}
+function seedOrder(n){
+  let arr=[1,2];
+  while(arr.length<n){ const m=arr.length*2, next=[]; arr.forEach(s=>{ next.push(s); next.push(m+1-s); }); arr=next; }
+  return arr.slice(0,n);
+}
+function champStandings(teams){
+  const rows = {};
+  teams.forEach(t=> rows[t] = { name:t, pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, dg:0, pts:0 });
+  champMatches('grupos').forEach(m=>{
+    if(!isPlayed(m)) return;
+    const a=m.champ.a, b=m.champ.b;
+    if(!rows[a] || !rows[b]) return;
+    const ga=scoreOf(m,'A'), gb=scoreOf(m,'B'), A=rows[a], B=rows[b];
+    A.pj++; B.pj++; A.gf+=ga; A.gc+=gb; B.gf+=gb; B.gc+=ga;
+    if(ga>gb){ A.pg++; B.pp++; A.pts+=3; } else if(ga<gb){ B.pg++; A.pp++; B.pts+=3; } else { A.pe++; B.pe++; A.pts++; B.pts++; }
+  });
+  const arr = teams.map(t=>rows[t]);
+  arr.forEach(r=> r.dg = r.gf - r.gc);
+  arr.sort((x,y)=> y.pts-x.pts || y.dg-x.dg || y.gf-x.gf || x.name.localeCompare(y.name,'es'));
+  return arr;
+}
+function koLabel(size){ return size===8?'Cuartos de final' : size===4?'Semifinales' : size===2?'Final' : (size+' equipos'); }
+function koWinner(m){
+  const a=scoreOf(m,'A'), b=scoreOf(m,'B');
+  const seedA = m.champ.seedA || 99, seedB = m.champ.seedB || 99;
+  if(a===b) return (seedA<=seedB) ? { name:m.champ.a, seed:seedA } : { name:m.champ.b, seed:seedB };
+  return a>b ? { name:m.champ.a, seed:seedA } : { name:m.champ.b, seed:seedB };
+}
+function createKoRound(pairs, roundSize){
+  const date = new Date().toISOString().slice(0,10);
+  pairs.forEach((pair,slot)=>{
+    const a=pair[0], b=pair[1];
+    data.matches.push({ id:uid(), date, mode:'interno', teamAName:a.name, teamBName:b.name, rivalName:'',
+      teamA: playersOfTeam(a.name), teamB: playersOfTeam(b.name), events:[], mvpId:null, gkId:null,
+      escabio:{}, comments:[], champ:{ phase:'elim', roundSize, slot, a:a.name, b:b.name, seedA:a.seed, seedB:b.seed } });
+  });
+}
+function currentKoRound(){
+  const elim = champMatches('elim');
+  if(!elim.length) return 0;
+  return Math.max.apply(null, elim.map(m=>m.champ.roundSize||0));
+}
+function koRoundMatches(size){ return champMatches('elim').filter(m=>m.champ.roundSize===size).sort((a,b)=>(a.champ.slot||0)-(b.champ.slot||0)); }
+function generateGroups(){
+  const teams = champTeams();
+  if(teams.length < 2){ alert('Necesitás al menos 2 equipos. Asigná el campo "Equipo" a los jugadores en la pestaña Jugadores.'); return; }
+  if(champMatches('grupos').length || champMatches('elim').length){
+    if(!confirm('Ya hay un campeonato generado. ¿Borrar todo y reiniciar la primera ronda?')) return;
+    data.matches = data.matches.filter(m=>!isChampMatch(m));
+  }
+  const date = new Date().toISOString().slice(0,10);
+  roundRobin(teams).forEach((pairs, rd)=>{
+    pairs.forEach(([a,b])=>{
+      data.matches.push({ id:uid(), date, mode:'interno', teamAName:a, teamBName:b, rivalName:'',
+        teamA: playersOfTeam(a), teamB: playersOfTeam(b), events:[], mvpId:null, gkId:null,
+        escabio:{}, comments:[], champ:{ phase:'grupos', round:rd+1, a, b } });
+    });
+  });
+  save(); render();
+}
+function generateKnockout(){
+  const teams = champTeams();
+  const q = champCfg().qualify || 4;
+  if(!champMatches('grupos').length){ alert('Primero generá la primera ronda.'); return; }
+  const table = champStandings(teams);
+  if(table.length < q){ alert('No hay suficientes equipos ('+table.length+') para '+q+' clasificados.'); return; }
+  const pend = champMatches('grupos').filter(m=>!isPlayed(m));
+  if(pend.length && !confirm('Todavía hay '+pend.length+' partido(s) de la primera ronda sin jugar. ¿Generar la zona eliminatoria igual?')) return;
+  if(champMatches('elim').length && !confirm('Ya hay una zona eliminatoria. ¿Regenerarla con las posiciones actuales?')) return;
+  data.matches = data.matches.filter(m=>!(m.champ && m.champ.phase==='elim'));
+  const qualifiers = table.slice(0,q);
+  const order = seedOrder(q), pairs = [];
+  for(let i=0;i<order.length;i+=2){
+    pairs.push([ { name:qualifiers[order[i]-1].name, seed:order[i] }, { name:qualifiers[order[i+1]-1].name, seed:order[i+1] } ]);
+  }
+  createKoRound(pairs, q);
+  save(); render();
+}
+function generateNextKo(){
+  const cur = currentKoRound();
+  if(!cur){ alert('Primero generá la zona eliminatoria.'); return; }
+  if(cur === 2){ alert('La final ya está generada.'); return; }
+  if(koRoundMatches(cur/2).length){ alert('La siguiente ronda ya está generada.'); return; }
+  const ms = koRoundMatches(cur);
+  if(ms.some(m=>!isPlayed(m))){ alert('Faltan partidos de '+koLabel(cur)+'. Cargá los resultados y finalizá esos partidos.'); return; }
+  const winners = ms.map(koWinner), pairs = [];
+  for(let i=0;i<winners.length;i+=2) pairs.push([winners[i], winners[i+1]]);
+  createKoRound(pairs, cur/2);
+  save(); render();
+}
+function resetChampionship(){
+  if(!champMatches('grupos').length && !champMatches('elim').length) return;
+  if(!confirm('¿Borrar todos los partidos del campeonato? Los partidos normales no se tocan.')) return;
+  data.matches = data.matches.filter(m=>!isChampMatch(m));
+  save(); render();
+}
+function setChampQualify(q){ champCfg().qualify = q; save(); render(); }
+
+function campeonatoHTML(){
+  const teams = champTeams();
+  const q = champCfg().qualify || 4;
+  const groups = champMatches('grupos');
+  const elim = champMatches('elim');
+  const table = champStandings(teams);
+  const curKo = currentKoRound();
+
+  const teamsCard = `<div class="card">
+    <h3>Equipos (${teams.length})</h3>
+    ${teams.length ? `<p>${teams.map(t=>`<span class="pill">${esc(t)}${isExplicitTeam(t)?` <span data-action="champ-del-team" data-team="${esc(t)}" style="cursor:pointer;font-weight:bold">×</span>`:''}</span>`).join(' ')}</p>`
+      : `<p class="muted">Todavía no hay equipos. Agregá uno abajo o asignale un <b>Equipo</b> a cada jugador en la pestaña <b>Jugadores</b>.</p>`}
+    <label>Agregar equipo</label>
+    <div class="toolbar">
+      <input id="champ-team" type="text" placeholder="Ej: Los Pibes FC" autocomplete="off" style="flex:1;width:auto;margin-top:0">
+      <button class="btn primary sm" data-action="champ-add-team">Agregar</button>
+    </div>
+    <p class="muted">Podés crear equipos acá y después asignarles jugadores con el campo <b>Equipo</b> (pestaña <b>Jugadores</b>). Los equipos con jugadores aparecen siempre.</p>
+  </div>`;
+
+  const formatCard = `<div class="card">
+    <h3>Formato</h3>
+    <label style="margin-bottom:6px">Clasificados a la zona eliminatoria</label>
+    <div class="toolbar">
+      ${[2,4,8].map(n=>`<button class="btn ${q===n?'primary':'ghost'} sm" data-action="champ-qualify" data-q="${n}">${n} equipos</button>`).join('')}
+    </div>
+    <div class="toolbar" style="margin-top:10px">
+      <button class="btn primary sm" data-action="champ-groups">${groups.length?'Reiniciar primera ronda':'Generar primera ronda'}</button>
+      ${groups.length?`<button class="btn sm" data-action="champ-ko" ${teams.length<q?'disabled':''}>Generar zona eliminatoria</button>`:''}
+      ${elim.length && curKo>2?`<button class="btn sm" data-action="champ-next">Generar ${koLabel(curKo/2)}</button>`:''}
+      ${(groups.length||elim.length)?`<button class="btn danger sm" data-action="champ-reset">Borrar campeonato</button>`:''}
+    </div>
+    <p class="muted" style="margin-top:8px">Los partidos del campeonato se cargan igual que cualquier partido (tocá uno para abrirlo y registrar goles). La tabla se arma sola con los resultados.</p>
+  </div>`;
+
+  const standingsCard = groups.length ? `<div class="card"><h3>Tabla de posiciones · primera ronda</h3>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th class="c">#</th><th>Equipo</th><th class="c">PJ</th><th class="c">PG</th><th class="c">PE</th><th class="c">PP</th><th class="c">GF</th><th class="c">GC</th><th class="c">DG</th><th class="c">Pts</th></tr></thead>
+      <tbody>${table.map((r,i)=>`<tr>
+        <td class="c">${i+1}</td><td>${esc(r.name)}${i<q?' <span class="pill gold">clasifica</span>':''}</td>
+        <td class="c">${r.pj}</td><td class="c">${r.pg}</td><td class="c">${r.pe}</td><td class="c">${r.pp}</td>
+        <td class="c">${r.gf}</td><td class="c">${r.gc}</td><td class="c">${r.dg>0?'+':''}${r.dg}</td>
+        <td class="c"><b>${r.pts}</b></td></tr>`).join('')}</tbody>
+    </table></div>
+    <p class="muted">PJ jugados · PG ganados · PE empatados · PP perdidos · GF/GC goles a favor y en contra · DG diferencia · Pts puntos (3 por victoria).</p>
+  </div>` : '';
+
+  const groupsList = groups.length ? `<div class="card"><h3>Partidos de la primera ronda</h3>
+    ${groups.slice().sort((a,b)=>(a.champ.round||0)-(b.champ.round||0) || String(a.champ.a).localeCompare(String(b.champ.a),'es')).map(m=>{
+      const ga=scoreOf(m,'A'), gb=scoreOf(m,'B');
+      return `<div class="assign-row clickable" data-action="open-match" data-id="${m.id}">
+        <span class="pname">${esc(m.champ.a)} <b>${ga} - ${gb}</b> ${esc(m.champ.b)} ${isPlayed(m)?'':'<span class="pill">pendiente</span>'}</span>
+        <span class="muted">Fecha ${m.champ.round} · ${fmtDate(m.date)}</span></div>`;
+    }).join('')}
+  </div>` : '';
+
+  let bracketCard = '';
+  if(elim.length){
+    const sizes = Array.from(new Set(elim.map(m=>m.champ.roundSize))).sort((a,b)=>b-a);
+    const final = koRoundMatches(2)[0];
+    const champion = (final && isPlayed(final)) ? `<p style="text-align:center;font-size:18px"><b>🏆 Campeón: ${esc(koWinner(final).name)}</b></p>` : '';
+    bracketCard = `<div class="card"><h3>Zona eliminatoria</h3>` + sizes.map(size=>{
+      const ms = koRoundMatches(size);
+      return `<div style="margin-bottom:10px"><div class="muted" style="margin:4px 0">${koLabel(size)}</div>` +
+        ms.map(m=>{
+          const played = isPlayed(m), w = koWinner(m);
+          const tag = played ? `<span class="pill gold">Gana ${esc(w.name)}</span>` : '<span class="pill">pendiente</span>';
+          return `<div class="assign-row clickable" data-action="open-match" data-id="${m.id}">
+            <span class="pname">${esc(m.champ.a)} <b>${scoreOf(m,'A')} - ${scoreOf(m,'B')}</b> ${esc(m.champ.b)}</span>
+            <span class="muted">${tag}</span></div>`;
+        }).join('') + `</div>`;
+    }).join('') + champion + `</div>`;
+  }
+
+  return `<div class="section-head"><h2>Campeonato</h2></div>` + teamsCard + formatCard + standingsCard + groupsList + bracketCard;
+}
+
 /* ---------- render ---------- */
 function render(){
-  $('#tabs').innerHTML = [['partidos','Partidos'],['estadisticas','Estadísticas'],['jugadores','Jugadores']]
+  $('#tabs').innerHTML = [['partidos','Partidos'],['campeonato','Campeonato'],['estadisticas','Estadísticas'],['jugadores','Jugadores']]
     .map(([k,l])=>`<button data-action="tab" data-view="${k}" class="${view===k?'active':''}">${l}</button>`).join('');
   $('#app').innerHTML = view==='jugador' ? playerDetailHTML()
     : view==='jugadores' ? jugadoresHTML()
+    : view==='campeonato' ? campeonatoHTML()
     : view==='estadisticas' ? statsHTML()
     : (currentMatchId ? matchDetailHTML() : partidosHTML());
 }
@@ -1132,7 +1480,7 @@ function partidosHTML(){
     const hach = _aH ? `<span class="tag hachazo">🪓 Hachazo: ${esc(pname(_aH))}</span>` : '';
     const pol = _aP ? `<span class="tag polemica">📣 Polémica: ${esc(pname(_aP))}</span>` : '';
     return `<article class="card match-card" data-action="open-match" data-id="${m.id}">
-      <div class="match-top"><span class="date">${fmtDate(m.date)}</span><span class="tags">${m.closed?'<span class="tag">🔒</span>':''}${mvp}${gk}${hach}${pol}</span></div>
+      <div class="match-top"><span class="date">${fmtDate(m.date)}</span><span class="tags">${m.champ?`<span class="tag">🏆 ${m.champ.phase==='grupos'?'Grupo':koLabel(m.champ.roundSize)}</span>`:''}${m.closed?'<span class="tag">🔒</span>':''}${mvp}${gk}${hach}${pol}</span></div>
       <div class="match-title">${title}</div>
       <div class="score"><b>${a}</b><span>-</span><b>${b}</b></div>
     </article>`;
@@ -1455,6 +1803,10 @@ function playerDetailHTML(){
           <label>Apodo <span class="hint">(opcional)</span><input id="e-nick" type="text" value="${esc(p.nickname||'')}" autocomplete="off"></label>
           <label>Dorsal <span class="hint">(opcional)</span><input id="e-num" type="text" value="${esc(p.number||'')}" inputmode="numeric" autocomplete="off"></label>
         </div>
+        <label>Equipo <span class="hint">(Fútbol 7 · opcional)</span>
+          <input id="e-team" type="text" list="team-list" value="${esc(p.team||'')}" placeholder="Ej: Los Pibes FC" autocomplete="off">
+        </label>
+        <datalist id="team-list">${teamOptionsHTML()}</datalist>
         <label style="margin-bottom:6px">Posición(es) <span class="hint">(podés elegir varias)</span></label>
         ${posPickerHTML()}
         <label class="check"><input type="checkbox" id="e-guest" ${p.guest?'checked':''}> Invitado (no del plantel)</label>
@@ -1511,6 +1863,7 @@ function playerDetailHTML(){
           <h2>${esc(p.name)}${invBadge(p)}</h2>
           ${p.nickname?`<p class="muted">"${esc(p.nickname)}"</p>`:''}
           <p class="muted">${p.number?'Dorsal '+esc(p.number):''}${p.number&&poss.length?' · ':''}${poss.length?esc(poss.join(' · ')):''}</p>
+          ${p.team?`<p class="muted">Equipo: <b>${esc(p.team)}</b></p>`:''}
         </div>
       </div>
       <div class="tiles">${tiles}</div>
@@ -1531,6 +1884,15 @@ function normFace(f){
     skin:0, hair:0, shirt:0, shirt2:0, style:0, eyes:0, eyeSize:2,
     facial: f.beard ? 1 : 0, hat:0, hatColor:0, glasses:0, jersey:0
   }, f);
+}
+/* ---------- Equipos (Fútbol 7) ---------- */
+function teamsList(){
+  const set = new Set(champTeams());
+  data.players.forEach(p=>{ const t = (p.team||'').trim(); if(t) set.add(t); });
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+}
+function teamOptionsHTML(){
+  return teamsList().map(t=>`<option value="${esc(t)}"></option>`).join('');
 }
 /* ---------- Posiciones ---------- */
 const POS_GROUPS = [
@@ -1605,7 +1967,7 @@ function jugadoresHTML(){
   const rowHTML = p => `<div class="assign-row clickable" data-action="open-player" data-id="${p.id}">
       <span class="pname">${playerAvatar(p,30)}${p.number?`<span class="num">${esc(p.number)}</span>`:''}${esc(p.name)}
         ${p.nickname?`<span class="muted">· ${esc(p.nickname)}</span>`:''}
-        ${playerPositions(p).length?`<span class="muted">(${esc(playerPositions(p).join(' · '))})</span>`:''}${invBadge(p)}</span>
+        ${playerPositions(p).length?`<span class="muted">(${esc(playerPositions(p).join(' · '))})</span>`:''}${p.team?`<span class="muted">· ${esc(p.team)}</span>`:''}${invBadge(p)}</span>
       ${isAdmin || DEMO ? `<button class="icon-btn" data-action="del-player" data-id="${p.id}">×</button>` : ''}
     </div>`;
   const roster = data.players.filter(p=>!p.guest);
@@ -1625,6 +1987,10 @@ function jugadoresHTML(){
           <input id="p-num" type="text" inputmode="numeric" placeholder="Ej: 10" autocomplete="off">
         </label>
       </div>
+      <label>Equipo <span class="hint">(Fútbol 7 · opcional)</span>
+        <input id="p-team" type="text" list="team-list" placeholder="Ej: Los Pibes FC" autocomplete="off">
+      </label>
+      <datalist id="team-list">${teamOptionsHTML()}</datalist>
       <label style="margin-bottom:6px">Posición(es) <span class="hint">(opcional · podés elegir varias)</span></label>
       ${posPickerHTML()}
       <label class="check"><input type="checkbox" id="p-guest"> Invitado (no del plantel)</label>
@@ -1672,23 +2038,34 @@ function jugadoresHTML(){
     </div>
 
     <div class="card">
-      <h3>Ayuda</h3>
-      <details class="help" open><summary>Crear un jugador</summary>
-        <p class="muted">En <b>Jugadores</b> completá nombre, apodo, dorsal y posición(es). Personalizá el muñeco estilo arcade: corte, cara, barba, anteojos, cabeza (gorra/vincha/gorro), piel, pelo y camiseta (color, segundo color y diseño) o "Aleatorio". Después tocá <b>Agregar al plantel</b>.</p></details>
-      <details class="help"><summary>Crear un partido</summary>
-        <p class="muted">En <b>Partidos</b> tocá <b>+ Nuevo partido</b>, poné la fecha y elegí <b>Interno</b> (7 vs 7 entre nosotros) o <b>Contra un rival</b>.</p></details>
-      <details class="help"><summary>Cargar goles y resultado</summary>
-        <p class="muted">Abrí el partido. En <b>Armar los equipos</b> tocá A o B para asignar a cada uno. Después usá <b>+ Gol</b> (elegís goleador y asistencia). El marcador se calcula solo.</p></details>
-      <details class="help"><summary>Figura y mejor arquero del partido</summary>
-        <p class="muted">Dentro del partido elegí la <b>Figura</b> (MVP) y, si atajó alguien, el <b>Mejor arquero</b> (podés marcarlo aparte del MVP). Después se cuentan en el ranking y en la ficha.</p></details>
-      <details class="help"><summary>Post-partido: escabio y comentarios</summary>
-        <p class="muted">En <b>Partidos</b>, abajo, elegí el partido en el selector. Cargá el <b>Escabio</b> con − / + y dejá <b>Comentarios</b> con tu nombre.</p></details>
-      <details class="help"><summary>Ranking y estadísticas</summary>
-        <p class="muted">En <b>Estadísticas</b> tenés el ranking con podio (tocá las categorías: goles, asistencias, figuras, partidos jugados, victorias, derrotas) y la tabla completa, con un gráfico de escabio por partido al final.</p></details>
-      <details class="help"><summary>Ficha de cada jugador</summary>
-        <p class="muted">Tocá un jugador en <b>Jugadores</b> o <b>Estadísticas</b> para ver su registro y el detalle partido a partido.</p></details>
-      <details class="help"><summary>Datos compartidos (nube)</summary>
-        <p class="muted">Todo se guarda en la nube: lo que carga uno lo ven todos al instante. No hace falta registrarse. Tip: agregá la web a la pantalla de inicio del celu.</p></details>
+      <h3>Manual de uso</h3>
+      <p class="muted">Guía rápida de Piel Morena FC. La app tiene cuatro secciones: <b>Partidos</b>, <b>Campeonato</b>, <b>Estadísticas</b> y <b>Jugadores</b>. Todo se guarda solo.</p>
+      <details class="help" open><summary>1. Cargar el plantel</summary>
+        <p class="muted">Andá a <b>Jugadores</b> y completá <b>nombre</b>, apodo, dorsal y posición(es). Personalizá el muñeco estilo arcade: corte, cara, barba, anteojos, cabeza (gorra/vincha/gorro), piel, pelo y camiseta (color, segundo color y diseño), o tocá <b>Aleatorio</b>. Confirmá con <b>Agregar al plantel</b>. Marcá "Invitado" para los que no son del plantel fijo.</p></details>
+      <details class="help"><summary>2. Crear un partido</summary>
+        <p class="muted">En <b>Partidos</b> tocá <b>+ Nuevo partido</b>, elegí la fecha y el tipo: <b>Interno</b> (7 vs 7 entre nosotros) o <b>Contra un rival</b> (cargá el nombre del rival).</p></details>
+      <details class="help"><summary>3. Armar los equipos</summary>
+        <p class="muted">Abrí el partido y en <b>Armar los equipos</b> asigná a cada jugador al equipo <b>A</b> o <b>B</b>. Si querés que salga al azar, tocá <b>Sortear equipos</b>; con <b>Vaciar</b> deshacés la asignación.</p></details>
+      <details class="help"><summary>4. Cargar goles</summary>
+        <p class="muted">Usá <b>+ Gol</b> del equipo que corresponda y elegí <b>goleador</b> y <b>asistencia</b> (opcional). El marcador se calcula solo. Podés borrar un gol desde su fila.</p></details>
+      <details class="help"><summary>5. Premios del partido</summary>
+        <p class="muted">Dentro del partido marcá la <b>Figura</b> (MVP), el <b>Mejor arquero</b>, el <b>Hachazo</b> y la <b>Polémica</b>. Después se cuentan en el ranking y en la ficha de cada jugador.</p></details>
+      <details class="help"><summary>6. Finalizar el partido</summary>
+        <p class="muted">Cuando termina, tocá <b>Finalizar partido</b> para dejarlo cerrado. Desde el mismo partido se puede <b>reabrir</b> o <b>eliminar</b> (el admin, o cualquiera en la demo).</p></details>
+      <details class="help"><summary>7. Escabio y comentarios</summary>
+        <p class="muted">En <b>Partidos</b>, en la parte de abajo, elegí el partido en el selector para cargar el <b>Escabio</b> con − / + y dejar <b>comentarios</b> con tu nombre.</p></details>
+      <details class="help"><summary>8. Campeonato</summary>
+        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente.</p></details>
+      <details class="help"><summary>9. Estadísticas y ranking</summary>
+        <p class="muted">En <b>Estadísticas</b> tenés el podio y la tabla completa. Cambiá la categoría con las píldoras de arriba: goles, asistencias, figuras, partidos jugados, victorias y derrotas. Al final hay un gráfico de escabio por partido.</p></details>
+      <details class="help"><summary>10. Ficha de cada jugador</summary>
+        <p class="muted">Tocá un jugador en <b>Jugadores</b> o <b>Estadísticas</b> para ver su resumen, sus totales y el detalle partido a partido.</p></details>
+      <details class="help"><summary>Extras del encabezado</summary>
+        <p class="muted"><b>Himno</b> prende o apaga la música y <b>Sonido</b> los efectos. En la <b>demo</b> aparece además el botón <b>Color</b> para elegir el color de la app (la canchita de fondo no cambia).</p></details>
+      <details class="help"><summary>Nube y datos compartidos</summary>
+        <p class="muted">Si la nube está conectada, lo que carga uno lo ven todos al instante y no hace falta registrarse. En <b>Jugadores</b> podés ver el estado, exportar o importar una copia de seguridad y ver los backups automáticos.</p></details>
+      <details class="help"><summary>Consejo</summary>
+        <p class="muted">Agregá la web a la pantalla de inicio del celular para usarla como una app. En la demo los datos son de ejemplo y quedan solo en este dispositivo.</p></details>
     </div>
   `;
 }
@@ -1699,6 +2076,10 @@ function closeModal(){ $('#modal-root').innerHTML = ''; }
 
 function openNewMatch(){
   const today = new Date().toISOString().slice(0,10);
+  const teams = champTeams();
+  const canTeams = teams.length >= 2;
+  const optsA = teams.map((t,i)=>`<option value="${esc(t)}"${i===0?' selected':''}>${esc(t)}</option>`).join('');
+  const optsB = teams.map((t,i)=>`<option value="${esc(t)}"${i===1?' selected':''}>${esc(t)}</option>`).join('');
   openModal(`
     <h3>Nuevo partido</h3>
     <label>Fecha<input type="date" id="m-date" value="${today}"></label>
@@ -1706,11 +2087,19 @@ function openNewMatch(){
       <select id="m-mode">
         <option value="interno">Interno (7 vs 7 entre nosotros)</option>
         <option value="rival">Contra un rival</option>
+        ${canTeams?`<option value="equipos">Equipos del campeonato</option>`:''}
       </select>
     </label>
     <div id="m-rival-wrap" style="display:none">
       <label>Nombre del rival<input type="text" id="m-rival" placeholder="Ej: Los Pibes FC" autocomplete="off"></label>
     </div>
+    ${canTeams?`<div id="m-teams-wrap" style="display:none">
+      <div class="grid2">
+        <label>Equipo A<select id="m-team-a">${optsA}</select></label>
+        <label>Equipo B<select id="m-team-b">${optsB}</select></label>
+      </div>
+      <p class="muted" style="margin-top:-6px">Se asignan solos los jugadores que tengan cargado ese equipo.</p>
+    </div>`:''}
     <div class="modal-actions">
       <button class="btn ghost" data-action="modal-close">Cancelar</button>
       <button class="btn primary" data-action="create-match">Crear</button>
@@ -1748,14 +2137,28 @@ function openAddGoal(side){
 function createMatch(){
   const date = $('#m-date').value;
   const mode = $('#m-mode').value;
-  const rival = mode==='rival' ? ($('#m-rival').value.trim() || 'Rival') : '';
-  const m = {
-    id: uid(), date, mode,
-    teamAName: mode==='rival' ? 'Piel Morena' : 'Equipo A',
-    teamBName: mode==='rival' ? rival : 'Equipo B',
-    rivalName: rival,
-    teamA: [], teamB: [], events: [], mvpId: null, gkId: null
-  };
+  let m;
+  if(mode==='equipos'){
+    const a = ($('#m-team-a')||{}).value || '';
+    const b = ($('#m-team-b')||{}).value || '';
+    if(!a || !b){ alert('Elegí los dos equipos.'); return; }
+    if(a===b){ alert('Elegí dos equipos distintos.'); return; }
+    m = {
+      id: uid(), date, mode:'interno',
+      teamAName: a, teamBName: b, rivalName: '',
+      teamA: playersOfTeam(a), teamB: playersOfTeam(b),
+      events: [], mvpId: null, gkId: null, escabio: {}, comments: []
+    };
+  } else {
+    const rival = mode==='rival' ? ($('#m-rival').value.trim() || 'Rival') : '';
+    m = {
+      id: uid(), date, mode,
+      teamAName: mode==='rival' ? 'Piel Morena' : 'Equipo A',
+      teamBName: mode==='rival' ? rival : 'Equipo B',
+      rivalName: rival,
+      teamA: [], teamB: [], events: [], mvpId: null, gkId: null
+    };
+  }
   data.matches.push(m); save(); persistMatch(m); closeModal();
   currentMatchId = m.id; view='partidos'; render();
 }
@@ -1860,6 +2263,7 @@ function addPlayer(){
     id: uid(), name,
     nickname: $('#p-nick').value.trim(),
     number: $('#p-num').value.trim(),
+    team: $('#p-team').value.trim(),
     positions: newPositions ? newPositions.slice() : [],
     guest: $('#p-guest').checked,
     face: Object.assign({}, newFace)
@@ -1885,6 +2289,7 @@ function savePlayer(){
   p.name = name;
   p.nickname = document.getElementById('e-nick').value.trim();
   p.number = document.getElementById('e-num').value.trim();
+  p.team = document.getElementById('e-team').value.trim();
   p.positions = newPositions ? newPositions.slice() : playerPositions(p);
   p.guest = document.getElementById('e-guest').checked;
   p.face = Object.assign({}, newFace);
@@ -2129,6 +2534,13 @@ document.addEventListener('click', e=>{
     case 'back': currentMatchId=null; render(); break;
     case 'new-match': openNewMatch(); break;
     case 'create-match': createMatch(); break;
+    case 'champ-qualify': setChampQualify(parseInt(t.dataset.q,10)||4); break;
+    case 'champ-add-team': addChampTeam(); break;
+    case 'champ-del-team': delChampTeam(t.dataset.team); break;
+    case 'champ-groups': generateGroups(); break;
+    case 'champ-ko': generateKnockout(); break;
+    case 'champ-next': generateNextKo(); break;
+    case 'champ-reset': resetChampionship(); break;
     case 'add-player': addPlayer(); break;
     case 'add-guest': addGuest(t.dataset.side); break;
     case 'del-player': delPlayer(id); break;
@@ -2176,6 +2588,8 @@ document.addEventListener('click', e=>{
     case 'cloud-help': openCloudHelp(); break;
     case 'toggle-sfx': toggleSfx(); break;
     case 'toggle-music': toggleHimno(); break;
+    case 'set-skin': setSkin(t.dataset.skin); break;
+    case 'open-skins': openSkins(); break;
     case 'bk-now': createBackup('manual'); break;
     case 'bk-download': downloadBackup(id); break;
     case 'bk-restore': restoreBackup(id); break;
@@ -2185,6 +2599,8 @@ document.addEventListener('change', e=>{
   if(e.target.id==='m-mode'){
     const w = $('#m-rival-wrap');
     if(w) w.style.display = e.target.value==='rival' ? 'block' : 'none';
+    const tw = $('#m-teams-wrap');
+    if(tw) tw.style.display = e.target.value==='equipos' ? 'block' : 'none';
   }
   if(e.target.id==='esc-match'){ escabioMatchId = e.target.value; render(); }
 });
@@ -2201,10 +2617,10 @@ if(DEMO){
   document.title = 'Fulbito FC · Demo';
   const h1 = document.querySelector('.brand h1');
   if(h1) h1.textContent = 'Fulbito FC';
-  const tc = document.querySelector('meta[name="theme-color"]');
-  if(tc) tc.setAttribute('content', '#0a1024');
-  document.querySelectorAll('.crest [fill="#7d2233"]').forEach(e=>e.setAttribute('fill','#00529f'));
-  document.querySelectorAll('.crest [fill="#f2b705"]').forEach(e=>e.setAttribute('fill','#febe10'));
+  applySkin(getSkin());
+  const skinBtn = document.getElementById('skin-btn');
+  if(skinBtn) skinBtn.style.display = '';
+  renderSkinButton();
   const app = document.querySelector('.app');
   const banner = document.createElement('div');
   banner.className = 'demo-banner';
