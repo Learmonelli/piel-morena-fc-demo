@@ -505,7 +505,7 @@
       </svg>
       <div>
         <h1>Piel Morena FC</h1>
-        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v68</span></p>
+        <p>Estadísticas del equipo · 7 vs 7 · <span id="app-ver">v69</span></p>
       </div>
     </div>
     <div class="header-btns">
@@ -523,6 +523,7 @@
 const DEMO = /[?&]demo(=|&|$)/.test(location.search) || /demo\.html$/i.test(location.pathname);
 const KEY = DEMO ? 'pielmorenafc_demo_v1' : 'pielmorenafc_v1';
 let data = load();
+normalizeChamp();
 let view = 'partidos';
 let currentMatchId = null;
 let currentPlayerId = null;
@@ -1248,18 +1249,54 @@ function faceForName(name, size){
 }
 
 /* ---------- Campeonato ---------- */
-function champCfg(){ if(!data.champ || typeof data.champ!=='object') data.champ = {}; return data.champ; }
-function champExplicitTeams(){
-  const c = champCfg();
-  if(!Array.isArray(c.teams)) c.teams = [];
-  return c.teams;
+function tournaments(){ if(!Array.isArray(data.tournaments)) data.tournaments = []; return data.tournaments; }
+function activeTournament(){
+  const list = tournaments();
+  if(!list.length) return null;
+  return list.find(t=>t.id===data.activeTid) || list[list.length-1];
 }
+function ensureTournaments(){
+  const list = tournaments();
+  if(!list.length){
+    const t = { id: uid(), name: 'Torneo 1', createdAt: Date.now(), teams: [], qualify: 4, generated: false };
+    list.push(t); data.activeTid = t.id;
+  }
+  if(!activeTournament()) data.activeTid = list[0].id;
+  return activeTournament();
+}
+function champCfg(){ const t = ensureTournaments(); if(!Array.isArray(t.teams)) t.teams = []; return t; }
+function champExplicitTeams(){ return champCfg().teams; }
 function isExplicitTeam(name){ return champExplicitTeams().some(t=>String(t||'').trim()===name); }
-function champTeams(){
+function playerTeamNames(){
   const set = new Set();
-  champExplicitTeams().forEach(t=>{ t = String(t||'').trim(); if(t) set.add(t); });
-  data.players.forEach(p=>{ if(p.guest) return; const t = (p.team||'').trim(); if(t) set.add(t); });
+  data.players.forEach(p=>{ if(p.guest) return; const t=(p.team||'').trim(); if(t) set.add(t); });
+  return Array.from(set);
+}
+function champTeams(){
+  const t = ensureTournaments();
+  const set = new Set();
+  (t.teams||[]).forEach(x=>{ x=String(x||'').trim(); if(x) set.add(x); });
+  playerTeamNames().forEach(x=> set.add(x));
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
+}
+function champTeamList(){
+  const t = ensureTournaments();
+  if(t.generated && Array.isArray(t.teams) && t.teams.length) return t.teams.slice();
+  return champTeams();
+}
+function newTournament(){
+  const list = tournaments();
+  const t = { id: uid(), name: 'Torneo '+(list.length+1), createdAt: Date.now(), teams: [], qualify: 4, generated: false };
+  list.push(t); data.activeTid = t.id; save(); render();
+}
+function setActiveTournament(id){ data.activeTid = id; save(); render(); }
+function delTournament(id){
+  const t = tournaments().find(x=>x.id===id); if(!t) return;
+  if(!confirm('¿Borrar el torneo "'+t.name+'" y todos sus partidos?')) return;
+  data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===id));
+  data.tournaments = tournaments().filter(x=>x.id!==id);
+  if(data.activeTid===id){ const l=tournaments(); data.activeTid = l.length ? l[l.length-1].id : null; }
+  save(); render();
 }
 function addChampTeam(){
   const el = document.getElementById('champ-team');
@@ -1279,7 +1316,29 @@ function delChampTeam(name){
 }
 function playersOfTeam(name){ return data.players.filter(p=>!p.guest && (p.team||'').trim()===name).map(p=>p.id); }
 function isChampMatch(m){ return !!(m && m.champ); }
-function champMatches(phase){ return data.matches.filter(m=>m.champ && m.champ.phase===phase); }
+function champMatches(phase){
+  const t = ensureTournaments();
+  return data.matches.filter(m=>m.champ && m.champ.tid===t.id && m.champ.phase===phase);
+}
+function normalizeChamp(){
+  if(Array.isArray(data.tournaments) && data.tournaments.length) return;
+  const old = (data.champ && typeof data.champ==='object') ? data.champ : null;
+  const champMs = (data.matches||[]).filter(m=>m.champ);
+  if(!old && !champMs.length) return;
+  const t = { id: uid(), name: 'Torneo 1', createdAt: Date.now(),
+    teams: (old && Array.isArray(old.teams)) ? old.teams.slice() : [],
+    qualify: (old && old.qualify) || 4, generated: champMs.length > 0 };
+  if(t.generated && !t.teams.length){
+    const set = new Set();
+    champMs.forEach(m=>{ if(m.champ.a) set.add(m.champ.a); if(m.champ.b) set.add(m.champ.b); });
+    t.teams = Array.from(set);
+  }
+  data.tournaments = [t];
+  data.activeTid = t.id;
+  champMs.forEach(m=>{ m.champ.tid = t.id; });
+  delete data.champ;
+  save();
+}
 function isPlayed(m){ return !!(m && (m.closed || (m.events||[]).length)); }
 function roundRobin(teams){
   const list = teams.slice();
@@ -1321,13 +1380,13 @@ function koWinner(m){
   if(a===b) return (seedA<=seedB) ? { name:m.champ.a, seed:seedA } : { name:m.champ.b, seed:seedB };
   return a>b ? { name:m.champ.a, seed:seedA } : { name:m.champ.b, seed:seedB };
 }
-function createKoRound(pairs, roundSize){
+function createKoRound(pairs, roundSize, tid){
   const date = new Date().toISOString().slice(0,10);
   pairs.forEach((pair,slot)=>{
     const a=pair[0], b=pair[1];
     data.matches.push({ id:uid(), date, mode:'interno', teamAName:a.name, teamBName:b.name, rivalName:'',
       teamA: playersOfTeam(a.name), teamB: playersOfTeam(b.name), events:[], mvpId:null, gkId:null,
-      escabio:{}, comments:[], champ:{ phase:'elim', roundSize, slot, a:a.name, b:b.name, seedA:a.seed, seedB:b.seed } });
+      escabio:{}, comments:[], champ:{ phase:'elim', tid, roundSize, slot, a:a.name, b:b.name, seedA:a.seed, seedB:b.seed } });
   });
 }
 function currentKoRound(){
@@ -1337,41 +1396,45 @@ function currentKoRound(){
 }
 function koRoundMatches(size){ return champMatches('elim').filter(m=>m.champ.roundSize===size).sort((a,b)=>(a.champ.slot||0)-(b.champ.slot||0)); }
 function generateGroups(){
+  const t = ensureTournaments();
   const teams = champTeams();
   if(teams.length < 2){ alert('Necesitás al menos 2 equipos. Asigná el campo "Equipo" a los jugadores en la pestaña Jugadores.'); return; }
   if(champMatches('grupos').length || champMatches('elim').length){
-    if(!confirm('Ya hay un campeonato generado. ¿Borrar todo y reiniciar la primera ronda?')) return;
-    data.matches = data.matches.filter(m=>!isChampMatch(m));
+    if(!confirm('Este torneo ya tiene partidos. ¿Borrar y reiniciar la primera ronda?')) return;
+    data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===t.id));
   }
+  t.teams = teams.slice(); t.generated = true;
   const date = new Date().toISOString().slice(0,10);
   roundRobin(teams).forEach((pairs, rd)=>{
     pairs.forEach(([a,b])=>{
       data.matches.push({ id:uid(), date, mode:'interno', teamAName:a, teamBName:b, rivalName:'',
         teamA: playersOfTeam(a), teamB: playersOfTeam(b), events:[], mvpId:null, gkId:null,
-        escabio:{}, comments:[], champ:{ phase:'grupos', round:rd+1, a, b } });
+        escabio:{}, comments:[], champ:{ phase:'grupos', tid:t.id, round:rd+1, a, b } });
     });
   });
   save(); render();
 }
 function generateKnockout(){
-  const teams = champTeams();
-  const q = champCfg().qualify || 4;
+  const t = ensureTournaments();
+  const teams = champTeamList();
+  const q = t.qualify || 4;
   if(!champMatches('grupos').length){ alert('Primero generá la primera ronda.'); return; }
   const table = champStandings(teams);
   if(table.length < q){ alert('No hay suficientes equipos ('+table.length+') para '+q+' clasificados.'); return; }
   const pend = champMatches('grupos').filter(m=>!isPlayed(m));
   if(pend.length && !confirm('Todavía hay '+pend.length+' partido(s) de la primera ronda sin jugar. ¿Generar la zona eliminatoria igual?')) return;
   if(champMatches('elim').length && !confirm('Ya hay una zona eliminatoria. ¿Regenerarla con las posiciones actuales?')) return;
-  data.matches = data.matches.filter(m=>!(m.champ && m.champ.phase==='elim'));
+  data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===t.id && m.champ.phase==='elim'));
   const qualifiers = table.slice(0,q);
   const order = seedOrder(q), pairs = [];
   for(let i=0;i<order.length;i+=2){
     pairs.push([ { name:qualifiers[order[i]-1].name, seed:order[i] }, { name:qualifiers[order[i+1]-1].name, seed:order[i+1] } ]);
   }
-  createKoRound(pairs, q);
+  createKoRound(pairs, q, t.id);
   save(); render();
 }
 function generateNextKo(){
+  const t = ensureTournaments();
   const cur = currentKoRound();
   if(!cur){ alert('Primero generá la zona eliminatoria.'); return; }
   if(cur === 2){ alert('La final ya está generada.'); return; }
@@ -1380,21 +1443,23 @@ function generateNextKo(){
   if(ms.some(m=>!isPlayed(m))){ alert('Faltan partidos de '+koLabel(cur)+'. Cargá los resultados y finalizá esos partidos.'); return; }
   const winners = ms.map(koWinner), pairs = [];
   for(let i=0;i<winners.length;i+=2) pairs.push([winners[i], winners[i+1]]);
-  createKoRound(pairs, cur/2);
+  createKoRound(pairs, cur/2, t.id);
   save(); render();
 }
 function resetChampionship(){
+  const t = ensureTournaments();
   if(!champMatches('grupos').length && !champMatches('elim').length) return;
-  if(!confirm('¿Borrar todos los partidos del campeonato? Los partidos normales no se tocan.')) return;
-  data.matches = data.matches.filter(m=>!isChampMatch(m));
+  if(!confirm('¿Borrar todos los partidos de este torneo? Los demás partidos no se tocan.')) return;
+  data.matches = data.matches.filter(m=>!(m.champ && m.champ.tid===t.id));
   save(); render();
 }
 function setChampQualify(q){ champCfg().qualify = q; save(); render(); }
 
 function simularCampeonato(){
   if(!DEMO) return;
-  const pend = data.matches.filter(m=>isChampMatch(m) && !isPlayed(m));
-  if(!pend.length){ alert('No hay partidos de campeonato pendientes. Generá la primera ronda o la próxima fase.'); return; }
+  const t = ensureTournaments();
+  const pend = data.matches.filter(m=>isChampMatch(m) && m.champ.tid===t.id && !isPlayed(m));
+  if(!pend.length){ alert('No hay partidos de este torneo pendientes. Generá la primera ronda o la próxima fase.'); return; }
   const roll = () => Math.floor(Math.random()*5);
   pend.forEach(m=>{
     let ga = roll(), gb = roll();
@@ -1431,23 +1496,38 @@ function championCardHTML(){
 }
 
 function campeonatoHTML(){
-  const teams = champTeams();
-  const q = champCfg().qualify || 4;
+  const t = ensureTournaments();
+  const teams = champTeamList();
+  const q = t.qualify || 4;
   const groups = champMatches('grupos');
   const elim = champMatches('elim');
   const table = champStandings(teams);
   const curKo = currentKoRound();
 
+  const tourCard = `<div class="card">
+    <h3>Torneos (${tournaments().length})</h3>
+    ${tournaments().length>1 ? `<label>Elegí el torneo
+      <select id="champ-tid">${tournaments().map(x=>`<option value="${x.id}"${x.id===t.id?' selected':''}>${esc(x.name)}</option>`).join('')}</select>
+    </label>` : ''}
+    <div class="toolbar">
+      <button class="btn primary sm" data-action="champ-new">+ Nuevo torneo</button>
+      ${tournaments().length>1?`<button class="btn danger sm" data-action="champ-del-torneo" data-id="${t.id}">Eliminar torneo</button>`:''}
+    </div>
+    <p class="muted">Podés tener varios torneos a la vez: cada uno guarda sus equipos, cruces, tabla y campeón. Al crear uno nuevo, el anterior queda guardado.</p>
+  </div>`;
+
   const teamsCard = `<div class="card">
     <h3>Equipos (${teams.length})</h3>
-    ${teams.length ? `<p>${teams.map(t=>`<span class="pill">${esc(t)}${isExplicitTeam(t)?` <span data-action="champ-del-team" data-team="${esc(t)}" style="cursor:pointer;font-weight:bold">×</span>`:''}</span>`).join(' ')}</p>`
+    ${teams.length ? `<p>${teams.map(x=>`<span class="pill">${esc(x)}${!t.generated && isExplicitTeam(x)?` <span data-action="champ-del-team" data-team="${esc(x)}" style="cursor:pointer;font-weight:bold">×</span>`:''}</span>`).join(' ')}</p>`
       : `<p class="muted">Todavía no hay equipos. Agregá uno abajo o asignale un <b>Equipo</b> a cada jugador en la pestaña <b>Jugadores</b>.</p>`}
-    <label>Agregar equipo</label>
-    <div class="toolbar">
-      <input id="champ-team" type="text" placeholder="Ej: Los Pibes FC" autocomplete="off" style="flex:1;width:auto;margin-top:0">
-      <button class="btn primary sm" data-action="champ-add-team">Agregar</button>
-    </div>
-    <p class="muted">Podés crear equipos acá y después asignarles jugadores con el campo <b>Equipo</b> (pestaña <b>Jugadores</b>). Los equipos con jugadores aparecen siempre.</p>
+    ${t.generated
+      ? `<p class="muted">Los equipos de este torneo ya quedaron fijos. Para cambiarlos, reiniciá la primera ronda o creá un nuevo torneo.</p>`
+      : `<label>Agregar equipo</label>
+        <div class="toolbar">
+          <input id="champ-team" type="text" placeholder="Ej: Los Pibes FC" autocomplete="off" style="flex:1;width:auto;margin-top:0">
+          <button class="btn primary sm" data-action="champ-add-team">Agregar</button>
+        </div>
+        <p class="muted">Podés crear equipos acá y después asignarles jugadores con el campo <b>Equipo</b> (pestaña <b>Jugadores</b>). Los equipos con jugadores aparecen siempre.</p>`}
   </div>`;
 
   const formatCard = `<div class="card">
@@ -1504,7 +1584,7 @@ function campeonatoHTML(){
   }
 
   const champCard = championCardHTML();
-  return `<div class="section-head"><h2>Campeonato</h2></div>` + champCard + teamsCard + formatCard + standingsCard + groupsList + bracketCard;
+  return `<div class="section-head"><h2>Campeonato</h2></div>` + champCard + tourCard + teamsCard + formatCard + standingsCard + groupsList + bracketCard;
 }
 
 /* ---------- render ---------- */
@@ -1535,8 +1615,9 @@ function partidosHTML(){
     const gk = _aG ? `<span class="tag gk">🧤 Arquero: ${esc(pname(_aG))}</span>` : '';
     const hach = _aH ? `<span class="tag hachazo">🪓 Hachazo: ${esc(pname(_aH))}</span>` : '';
     const pol = _aP ? `<span class="tag polemica">📣 Polémica: ${esc(pname(_aP))}</span>` : '';
+    const tour = m.champ && tournaments().length>1 ? ((tournaments().find(x=>x.id===m.champ.tid)||{}).name || '') : '';
     return `<article class="card match-card" data-action="open-match" data-id="${m.id}">
-      <div class="match-top"><span class="date">${fmtDate(m.date)}</span><span class="tags">${m.champ?`<span class="tag">🏆 ${m.champ.phase==='grupos'?'Grupo':koLabel(m.champ.roundSize)}</span>`:''}${m.closed?'<span class="tag">🔒</span>':''}${mvp}${gk}${hach}${pol}</span></div>
+      <div class="match-top"><span class="date">${fmtDate(m.date)}</span><span class="tags">${m.champ?`<span class="tag">🏆 ${tour?esc(tour)+' · ':''}${m.champ.phase==='grupos'?'Grupo':koLabel(m.champ.roundSize)}</span>`:''}${m.closed?'<span class="tag">🔒</span>':''}${mvp}${gk}${hach}${pol}</span></div>
       <div class="match-title">${title}</div>
       <div class="score"><b>${a}</b><span>-</span><b>${b}</b></div>
     </article>`;
@@ -1943,8 +2024,10 @@ function normFace(f){
 }
 /* ---------- Equipos (Fútbol 7) ---------- */
 function teamsList(){
-  const set = new Set(champTeams());
-  data.players.forEach(p=>{ const t = (p.team||'').trim(); if(t) set.add(t); });
+  const set = new Set();
+  const t = activeTournament();
+  if(t && Array.isArray(t.teams)) t.teams.forEach(x=>{ x=String(x||'').trim(); if(x) set.add(x); });
+  data.players.forEach(p=>{ if(p.guest) return; const x=(p.team||'').trim(); if(x) set.add(x); });
   return Array.from(set).sort((a,b)=>a.localeCompare(b,'es'));
 }
 function teamOptionsHTML(){
@@ -2111,7 +2194,7 @@ function jugadoresHTML(){
       <details class="help"><summary>7. Escabio y comentarios</summary>
         <p class="muted">En <b>Partidos</b>, en la parte de abajo, elegí el partido en el selector para cargar el <b>Escabio</b> con − / + y dejar <b>comentarios</b> con tu nombre.</p></details>
       <details class="help"><summary>8. Campeonato</summary>
-        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con <b>todo el equipo</b> levantando la copa.</p></details>
+        <p class="muted">En <b>Campeonato</b> agregá los equipos, definí cuántos clasifican y generá la <b>primera ronda</b> (grupos) y la <b>zona eliminatoria</b>. La tabla y las llaves se arman solas; también podés reiniciar la primera ronda o generar la fase siguiente. En la <b>demo</b> tenés el botón <b>Simular resultados</b> para completar la ronda al azar y avanzar. Cuando se define el campeón se muestra la celebración con <b>todo el equipo</b> levantando la copa. Podés tener <b>varios torneos</b> a la vez: el selector <b>Torneos</b> te deja cambiar entre ellos y al crear uno nuevo el anterior queda guardado.</p></details>
       <details class="help"><summary>9. Estadísticas y ranking</summary>
         <p class="muted">En <b>Estadísticas</b> tenés el podio y la tabla completa. Cambiá la categoría con las píldoras de arriba: goles, asistencias, figuras, partidos jugados, victorias y derrotas. Al final hay un gráfico de escabio por partido.</p></details>
       <details class="help"><summary>10. Ficha de cada jugador</summary>
@@ -2132,7 +2215,7 @@ function closeModal(){ $('#modal-root').innerHTML = ''; }
 
 function openNewMatch(){
   const today = new Date().toISOString().slice(0,10);
-  const teams = champTeams();
+  const teams = teamsList();
   const canTeams = DEMO && teams.length >= 2;
   const optsA = teams.map((t,i)=>`<option value="${esc(t)}"${i===0?' selected':''}>${esc(t)}</option>`).join('');
   const optsB = teams.map((t,i)=>`<option value="${esc(t)}"${i===1?' selected':''}>${esc(t)}</option>`).join('');
@@ -2402,7 +2485,7 @@ function importData(){
 async function resetData(){
   if(DEMO){
     if(!confirm('¿Restaurar los datos de ejemplo de la demo? Se descartan tus cambios locales.')) return;
-    data = demoSeed(); currentMatchId=null; escabioMatchId=null; save(); render();
+    data = demoSeed(); normalizeChamp(); currentMatchId=null; escabioMatchId=null; save(); render();
     return;
   }
   if(!confirm('Esto borra TODOS los jugadores y partidos (de este dispositivo y de la nube). ¿Seguro?')) return;
@@ -2598,6 +2681,8 @@ document.addEventListener('click', e=>{
     case 'champ-next': generateNextKo(); break;
     case 'champ-reset': resetChampionship(); break;
     case 'champ-sim': simularCampeonato(); break;
+    case 'champ-new': newTournament(); break;
+    case 'champ-del-torneo': delTournament(id); break;
     case 'add-player': addPlayer(); break;
     case 'add-guest': addGuest(t.dataset.side); break;
     case 'del-player': delPlayer(id); break;
@@ -2660,6 +2745,7 @@ document.addEventListener('change', e=>{
     if(tw) tw.style.display = e.target.value==='equipos' ? 'block' : 'none';
   }
   if(e.target.id==='esc-match'){ escabioMatchId = e.target.value; render(); }
+  if(e.target.id==='champ-tid'){ setActiveTournament(e.target.value); }
 });
 document.addEventListener('input', e=>{
   if(e.target.id==='c-name'){
@@ -2669,7 +2755,7 @@ document.addEventListener('input', e=>{
 });
 
 if(DEMO){
-  if(!data.players.length && !data.matches.length){ data = demoSeed(); save(); }
+  if(!data.players.length && !data.matches.length){ data = demoSeed(); normalizeChamp(); save(); }
   document.body.classList.add('demo');
   document.title = 'Fulbito FC · Demo';
   const h1 = document.querySelector('.brand h1');
