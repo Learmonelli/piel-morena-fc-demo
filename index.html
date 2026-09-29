@@ -521,9 +521,8 @@
 
 <script>
 const DEMO = /[?&]demo(=|&|$)/.test(location.search) || /demo\.html$/i.test(location.pathname);
-const KEY = DEMO ? 'pielmorenafc_demo_v1' : 'pielmorenafc_v1';
+const KEY = DEMO ? 'pielmorenafc_demo_v2' : 'pielmorenafc_v1';
 let data = load();
-normalizeChamp();
 let view = 'partidos';
 let currentMatchId = null;
 let currentPlayerId = null;
@@ -606,125 +605,19 @@ function load(){
   }catch(e){}
   return { players:[], matches:[] };
 }
-function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
-
-/* ---------- Modo demo (datos de ejemplo, sin nube) ---------- */
-function demoRand(seed){
-  return function(){
-    seed = seed + 0x6D2B79F5 | 0;
-    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
-function demoSeed(){
-  const rnd = demoRand(20260924);
-  const ri = n => Math.floor(rnd()*n);
-  const pick = a => a[ri(a.length)];
-  const shuffled = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j=ri(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
-
-  const roster = [
-    ['Juan Pérez','Tuti','10',['MCO','MC']],
-    ['Sofía Ramírez','Sofi','7',['DC','SD']],
-    ['Nico Fernández','Nico','1',['PO']],
-    ['Camila Duarte','Cami','4',['DFC','MCD']],
-    ['Diego Sosa','Diegui','2',['LT','CAI']],
-    ['Valentina Ríos','Vale','5',['MC','MCD']],
-    ['Fede Acuña','Fede','9',['DC','PT']],
-    ['Martina López','Martu','8',['MD','MCO']],
-    ['Santi Vera','Santi','3',['LD','DFC']],
-    ['Julieta Benítez','Juli','11',['EI','ED']],
-    ['Gonza Ruiz','Gonza','6',['MCD','DFC']],
-    ['Agustina Pereyra','Agus','14',['MI','MC']],
-    ['Lucas Herrera','Lucho','10',['MCO','DC']],
-    ['Brenda Ríos','Bren','2',['DFC','LD']],
-    ['Matías Quiroga','Mati','7',['ED','EI']],
-    ['Carla Gómez','Carli','9',['DC','SD']]
-  ];
-  const demoTeams = ['Los Pibes FC','Deportivo Resaca','Barrio Sur FC','Atlético Tripa'];
-  const players = roster.map(([name,nickname,number,positions],i)=>({
-    id:'demo_p'+i, name, nickname, number, positions, guest:false, team: demoTeams[Math.floor(i/4)], face: randomFace()
-  }));
-  players.push({ id:'demo_guest', name:'Rocío (invitada)', nickname:'Rocío', number:'', positions:['MC'], guest:true, team:'', face: randomFace() });
-
-  const teamNames = ['Equipo Negro','Equipo Rojo','Equipo Verde','Equipo Azul','Equipo Blanco','Equipo Violeta'];
-  const rivals = ['Los Guapos FC','Barrio Sur FC','Deportivo Resaca','Los Pibes'];
-  const commentsPool = [
-    ['Tuti','Gran partido, la rompimos.'],
-    ['Sofi','El segundo tiempo fue nuestro.'],
-    ['Diegui','Faltó puntería, pero ganamos.'],
-    ['Cami','Ese gol de media cancha fue una locura.'],
-    ['Santi','Arrancamos dormidos y lo dimos vuelta.'],
-    ['Martu','MVP merecido.'],
-    ['Vale','Hay que mejorar la marca en el mediocampo.'],
-    ['Agus','Buen finde de fútbol, se festeja.']
-  ];
-
-  const matches = [];
-  const today = new Date();
-  for(let i=0;i<7;i++){
-    const d = new Date(today.getTime() - i*7*86400000);
-    const date = d.toISOString().slice(0,10);
-    const isRival = (i % 3 === 2);
-    const m = { id:'demo_m'+i, date, mode: isRival?'rival':'interno', teamA:[], teamB:[], events:[],
-                mvpId:null, gkId:null, hachazoId:null, polemicaId:null, escabio:{}, comments:[] };
-    const pool = shuffled(players.filter(p=>!p.guest).map(p=>p.id)).slice(0, isRival?10:12);
-    if(isRival){
-      m.teamAName = 'Fulbito FC';
-      m.teamBName = pick(rivals);
-      m.rivalName = m.teamBName;
-      m.teamA = pool;
-    } else {
-      m.teamAName = pick(teamNames);
-      m.teamBName = pick(teamNames.filter(n=>n!==m.teamAName));
-      const half = Math.ceil(pool.length/2);
-      m.teamA = pool.slice(0,half);
-      m.teamB = pool.slice(half);
-    }
-    const all = isRival ? m.teamA : [...m.teamA, ...m.teamB];
-    const totalGoals = 2 + ri(6);
-    for(let g=0; g<totalGoals; g++){
-      if(isRival && rnd() < 0.5){
-        m.events.push({ id:'demo_m'+i+'_e'+g, side:'B', scorerId:'', assistId:'' });
-      } else {
-        const rosterSide = (isRival || rnd() < 0.5) ? m.teamA : m.teamB;
-        const side = rosterSide === m.teamA ? 'A' : 'B';
-        const scorerId = pick(rosterSide);
-        const others = rosterSide.filter(x=>x!==scorerId);
-        const assistId = (others.length && rnd()<0.55) ? pick(others) : '';
-        m.events.push({ id:'demo_m'+i+'_e'+g, side, scorerId, assistId });
-      }
-    }
-    const scorers = m.events.filter(e=>e.scorerId).map(e=>e.scorerId);
-    m.mvpId = scorers.length ? pick(scorers) : pick(m.teamA);
-    const gks = all.filter(id=>{ const p = players.find(x=>x.id===id); return p && p.positions.includes('PO'); });
-    if(gks.length) m.gkId = pick(gks);
-    if(all.length){ m.hachazoId = pick(all); m.polemicaId = pick(all); }
-    all.forEach(id=>{ const q = ri(3); if(q>0) m.escabio[id] = q; });
-    const nc = ri(3);
-    for(let c=0;c<nc;c++){ const [author,text] = pick(commentsPool); m.comments.push({ id:'demo_m'+i+'_c'+c, author, text, ts: d.getTime() + (c+1)*3600000 }); }
-    matches.push(m);
-  }
-
-  const seedDate = new Date().toISOString().slice(0,10);
-  const idsOfTeam = name => players.filter(p=>!p.guest && p.team===name).map(p=>p.id);
-  roundRobin(demoTeams).forEach((pairs, rd)=>{
-    pairs.forEach(([ta,tb])=>{
-      const m = { id:'demo_ch_'+rd+'_'+ta.replace(/\s+/g,''), date: seedDate, mode:'interno',
-        teamAName: ta, teamBName: tb, rivalName:'', teamA: idsOfTeam(ta), teamB: idsOfTeam(tb),
-        events:[], mvpId:null, gkId:null, escabio:{}, comments:[], closed:true,
-        champ:{ phase:'grupos', round: rd+1, a:ta, b:tb } };
-      for(let g=0, n=ri(4); g<n; g++){ const sc=idsOfTeam(ta); if(sc.length) m.events.push({ id:m.id+'_a'+g, side:'A', scorerId:pick(sc), assistId:'' }); }
-      for(let g=0, n=ri(4); g<n; g++){ const sc=idsOfTeam(tb); if(sc.length) m.events.push({ id:m.id+'_b'+g, side:'B', scorerId:pick(sc), assistId:'' }); }
-      matches.push(m);
-    });
-  });
-  return { players, matches, champ:{ qualify:4 } };
-}
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); persistChamp(); }
 
 /* ---------- Nube (Firebase / Firestore) ---------- */
-const FBCFG_KEY = 'pielmorenafc_fbconfig';
-const DEFAULT_FB_CONFIG = null;
+const FBCFG_KEY = DEMO ? 'pielmorenafc_fbconfig_demo' : 'pielmorenafc_fbconfig';
+const DEMO_FB_CONFIG = {
+  apiKey: "AIzaSyBC6PgZtDQMJaqJxgIDDowCx75QA2bNYBQ",
+  authDomain: "futbol7-demo-71238.firebaseapp.com",
+  projectId: "futbol7-demo-71238",
+  storageBucket: "futbol7-demo-71238.firebasestorage.app",
+  messagingSenderId: "541929339266",
+  appId: "1:541929339266:web:21b1585fe53e239bc6f79b"
+};
+const DEFAULT_FB_CONFIG = DEMO ? DEMO_FB_CONFIG : null;
 let fbConfig = loadFbConfig();
 let db = null;
 let cloudStarted = false;
@@ -735,7 +628,7 @@ function loadFbConfig(){
   try{ const c = JSON.parse(localStorage.getItem(FBCFG_KEY)); if(c && c.projectId) return c; }catch(e){}
   return DEFAULT_FB_CONFIG;
 }
-function cloudConfigured(){ return DEMO ? false : !!fbConfig; }
+function cloudConfigured(){ return !!fbConfig; }
 function fsReady(){ return !!db; }
 
 function parseFbConfig(text){
@@ -746,12 +639,12 @@ function parseFbConfig(text){
   return obj;
 }
 function saveFbConfig(){
-  if(DEMO) return;
   const el = document.getElementById('fb-config');
   try{
     fbConfig = parseFbConfig(el ? el.value : '');
     localStorage.setItem(FBCFG_KEY, JSON.stringify(fbConfig));
     cloudStarted = false; db = null;
+    updateDemoBanner();
     initCloud(); render();
   }catch(e){ alert('No pude leer la config: ' + e.message); }
 }
@@ -814,6 +707,19 @@ async function initCloud(){
       backupsLoaded = true; backupsBlocked = false;
       afterSnapshot();
     }, ()=>{ backupsLoaded = true; backupsBlocked = true; render(); });
+
+    db.collection('meta').doc('champ').onSnapshot(snap=>{
+      const d = snap.data();
+      if(d){
+        data.tournaments = Array.isArray(d.tournaments) ? d.tournaments : [];
+        data.activeTid = d.activeTid || (data.tournaments[0] && data.tournaments[0].id) || null;
+        lastChampJSON = JSON.stringify(champPayload());
+        localStorage.setItem(KEY, JSON.stringify(data));
+        render();
+      } else {
+        persistChamp();
+      }
+    }, err=>cloudFail(err));
   }catch(e){
     cloudState = { status:'error', message:'Error al iniciar Firebase: ' + e.message };
     renderCloudStatus();
@@ -834,6 +740,35 @@ function persistMatch(m){ if(fsReady()) db.collection('matches').doc(m.id).set(m
 function persistComments(m){ if(fsReady()) db.collection('matches').doc(m.id).update({ comments: m.comments || [] }).catch(e=>cloudFail(e)); }
 function removeMatchDoc(id){ if(fsReady()) db.collection('matches').doc(id).delete().catch(e=>cloudFail(e)); }
 function cloudFail(e){ cloudState = { status:'error', message:'Error: ' + (e && e.message ? e.message : e) }; renderCloudStatus(); }
+
+/* ---------- Campeonatos en la nube ---------- */
+let lastChampJSON = '';
+function champPayload(){ return { tournaments: tournaments(), activeTid: data.activeTid || null }; }
+function persistChamp(){
+  if(!fsReady()) return;
+  const payload = champPayload();
+  const j = JSON.stringify(payload);
+  if(j === lastChampJSON) return;
+  lastChampJSON = j;
+  db.collection('meta').doc('champ').set(payload).catch(e=>cloudFail(e));
+}
+
+/* ---------- Demo: borra todos los datos (local y nube) ---------- */
+function demoClearCloud(){
+  if(!fsReady()) return;
+  ['players','matches'].forEach(name=>{
+    db.collection(name).get().then(snap=>{
+      const dels = snap.docs.map(d=>db.collection(name).doc(d.id).delete());
+      return Promise.all(dels);
+    }).catch(e=>cloudFail(e));
+  });
+}
+function updateDemoBanner(){
+  const b = document.querySelector('.demo-banner');
+  if(b) b.textContent = cloudConfigured()
+    ? 'Demo · se comparten en la nube'
+    : 'Demo · solo en este dispositivo';
+}
 
 /* ---------- Sesión de administrador (Google) ---------- */
 function adminLogin(){
@@ -888,7 +823,7 @@ function pruneBackups(){
   }).catch(()=>{});
 }
 function maybeAutoBackup(){
-  if(autoBackupTried || !fsReady() || !backupsLoaded || backupsBlocked) return;
+  if(DEMO || autoBackupTried || !fsReady() || !backupsLoaded || backupsBlocked) return;
   if(!data.players.length && !data.matches.length) return;
   autoBackupTried = true;
   const week = backupWeekKey();
@@ -919,7 +854,7 @@ function restoreBackup(id){
   }
 }
 function backupsHTML(){
-  if(!cloudConfigured()) return '';
+  if(DEMO || !cloudConfigured()) return '';
   if(backupsBlocked) return `<h3 style="margin-top:16px">Backups en la nube</h3>
     <p class="muted" style="color:#ff9a9d">Falta habilitar la colección <b>backups</b> en las reglas de Firestore (no afecta a tus datos). Agregá esta línea y publicá:</p>
     <pre class="rules">match /backups/{id} { allow read, write: if true; }</pre>`;
@@ -983,6 +918,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /backups/{id} { allow read, write: if true; }
+    match /meta/{id} { allow read, write: if true; }
   }
 }</pre>
     <p class="muted">Para entrar como admin: en <b>Jugadores</b> → tarjeta <b>Nube</b> → <b>Entrar como admin</b> con <b>${ADMIN_EMAIL}</b>. Los demás no necesitan cuenta.</p>
@@ -2215,11 +2151,21 @@ function jugadoresHTML(){
     <div class="card">
       <h3>${DEMO?'Modo demo':'Nube (Firebase · datos compartidos)'}</h3>
       ${DEMO
-        ? `<p class="muted">Estás viendo una <b>demo</b> con jugadores y partidos de ejemplo. Podés probar todo: cargar jugadores, armar y <b>sortear equipos</b>, goles, ranking, escabio y comentarios.</p>
-           <p class="muted">Los cambios quedan <b>solo en este dispositivo</b> y no afectan los datos reales del equipo.</p>
-           <div class="toolbar" style="margin-top:6px">
-             <button class="btn primary sm" data-action="reset">Restaurar datos de ejemplo</button>
-           </div>`
+        ? `<p class="muted">Estás viendo una <b>demo</b> que arranca <b>en blanco</b>. Podés probar todo: cargar jugadores, armar y <b>sortear equipos</b>, goles, campeonato, ranking, escabio y comentarios.</p>
+           ${cloudConfigured()
+             ? `<div id="cloud-status">${cloudStatusHTML()}</div>
+                <p class="muted">Los cambios se comparten en la <b>nube de la demo</b>${fbConfig && fbConfig.projectId?' (proyecto '+esc(fbConfig.projectId)+')':''} y no afectan los datos reales del equipo.</p>
+                <div class="toolbar" style="margin-top:6px">
+                  <button class="btn danger sm" data-action="reset">Borrar todos los datos</button>
+                </div>`
+             : `<p class="muted">Los cambios quedan <b>solo en este dispositivo</b> y no afectan los datos reales del equipo. Conectá la nube para compartirlos.</p>
+                <label>Pegá acá el <b>firebaseConfig</b> de la demo
+                  <textarea id="fb-config" rows="6" placeholder='{ "apiKey": "...", "projectId": "...", ... }' autocomplete="off"></textarea>
+                </label>
+                <button class="btn primary block" data-action="cloud-save-config" style="margin-bottom:8px">Guardar y conectar</button>
+                <div class="toolbar">
+                  <button class="btn danger sm" data-action="reset">Borrar todos los datos</button>
+                </div>`}`
         : `<div id="cloud-status">${cloudStatusHTML()}</div>
            ${cloudConfigured()
              ? `<div class="toolbar">
@@ -2237,7 +2183,7 @@ function jugadoresHTML(){
 
     <div class="card">
       <h3>Datos del equipo</h3>
-      <p class="muted">${DEMO?'En la demo podés exportar o restaurar el ejemplo.':'Copia de seguridad manual por si querés pasarla a otro dispositivo.'}</p>
+      <p class="muted">${DEMO?'En la demo podés exportar los datos.':'Copia de seguridad manual por si querés pasarla a otro dispositivo.'}</p>
       <div class="toolbar">
         <button class="btn ghost sm" data-action="export">Exportar</button>
         ${DEMO?'':`<button class="btn ghost sm" data-action="import">Importar</button>`}
@@ -2553,8 +2499,9 @@ function importData(){
 }
 async function resetData(){
   if(DEMO){
-    if(!confirm('¿Restaurar los datos de ejemplo de la demo? Se descartan tus cambios locales.')) return;
-    data = demoSeed(); normalizeChamp(); currentMatchId=null; escabioMatchId=null; save(); render();
+    if(!confirm('¿Borrar todos los datos de la demo (jugadores y partidos)?')) return;
+    data = { players:[], matches:[] }; normalizeChamp(); currentMatchId=null; escabioMatchId=null; save(); render();
+    demoClearCloud();
     return;
   }
   if(!confirm('Esto borra TODOS los jugadores y partidos (de este dispositivo y de la nube). ¿Seguro?')) return;
@@ -2825,7 +2772,6 @@ document.addEventListener('input', e=>{
 });
 
 if(DEMO){
-  if(!data.players.length && !data.matches.length){ data = demoSeed(); normalizeChamp(); save(); }
   document.body.classList.add('demo');
   document.title = 'Fulbito FC · Demo';
   const h1 = document.querySelector('.brand h1');
@@ -2837,8 +2783,8 @@ if(DEMO){
   const app = document.querySelector('.app');
   const banner = document.createElement('div');
   banner.className = 'demo-banner';
-  banner.textContent = 'Demo · datos de ejemplo · no se comparten';
   if(app) app.prepend(banner);
+  updateDemoBanner();
   const ver = document.getElementById('app-ver');
   if(ver) ver.textContent = 'demo';
 }
@@ -2846,6 +2792,7 @@ if(DEMO){
 updateSfxBtn();
 updateHimnoBtn();
 autoCloseOldMatches();
+normalizeChamp();
 render();
 initCloud();
 </script>
