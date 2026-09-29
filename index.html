@@ -2152,6 +2152,7 @@ function jugadoresHTML(){
       <h3>${DEMO?'Modo demo':'Nube (Firebase · datos compartidos)'}</h3>
       ${DEMO
         ? `<p class="muted">Estás viendo una <b>demo</b> que arranca <b>en blanco</b>. Podés probar todo: cargar jugadores, armar y <b>sortear equipos</b>, goles, campeonato, ranking, escabio y comentarios.</p>
+           <p class="muted"><b>No hay usuario admin</b>: en la demo cualquiera puede crear, editar, finalizar, reabrir y borrar jugadores y partidos, sin cuenta.</p>
            ${cloudConfigured()
              ? `<div id="cloud-status">${cloudStatusHTML()}</div>
                 <p class="muted">Los cambios se comparten en la <b>nube de la demo</b>${fbConfig && fbConfig.projectId?' (proyecto '+esc(fbConfig.projectId)+')':''} y no afectan los datos reales del equipo.</p>
